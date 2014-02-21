@@ -6,7 +6,7 @@ public class Tile : MonoBehaviour{
 	private float x, z;
 	public int xCoord, zCoord;
 	public static float width = 1.5f, length = 1.5f;
-	//public Units currentUnit = null;
+	public Units currentUnit = null;
 	public Texture texture;
 	public static string tileTextureA, tileTextureB, tileTextureC,tileTextureD;
 	private Material spriteMaterial;
