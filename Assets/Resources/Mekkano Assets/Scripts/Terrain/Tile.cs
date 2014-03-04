@@ -5,19 +5,19 @@ public class Tile : MonoBehaviour{
 	
 	private float x, z;
 	public int xCoord, zCoord;
-	public static float width = 1.5f, length = 1.5f;
+	public static float width = 2, length = 2;
 	public Units currentUnit = null;
 	public Texture texture;
 	public static string tileTextureA, tileTextureB, tileTextureC,tileTextureD;
 	private Material spriteMaterial;
-	//private Geometry tile;
+	public GameObject currentTile;
 
 	public float getX(){
-		return x + Tile.width/2;
+		return x;
 	}
 	
 	public float getZ(){
-		return z - Tile.length/2;
+		return z;
 	}
 	/*
 	public Texture getTexture(){
@@ -54,13 +54,15 @@ public class Tile : MonoBehaviour{
 		rootNode.attachChild(tile); */
 
 		GameObject tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
-		setTexture (tile, "Mekkano Assets/Textures/Test textures/tileB");
+		setTexture (tile, "Mekkano Assets/Textures/tileA");
+		tile.renderer.material.shader = Shader.Find ("Unlit/Transparent");
 		tile.name = "tile";
 
 		x = X;
 		z = Z;
 
-		tile.transform.localPosition = new Vector3 (x, 0, z);
+		tile.transform.localScale = new Vector3 (width, length, 1);
+		tile.transform.localPosition = new Vector3 (x, Y, z);
 		tile.transform.Rotate (new Vector3 (90,0,0));
 	}
 

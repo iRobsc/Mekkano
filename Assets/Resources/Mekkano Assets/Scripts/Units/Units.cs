@@ -2,32 +2,36 @@
 using System.Collections;
 
 public class Units : MonoBehaviour {
-
+	
 	public int hp;
 	public bool selected;
 	public Tile currentTile, targetTile;
 	public double angle;
 	public static float speed = 100; // closer to 0 equals faster (100 is a good speed)
 	protected int tileRange, movementPoints;
-	protected float scale, x, z, damage, gridHeight;
-	private GameObject unitModel;
+	protected float scale, x, z, damage;
+	private float gridHeight;
+	public GameObject unitModel;
 	private Texture unitStandardTexture, unitSelectedTexture;
+	private Grid grid;
+	private Texture standardTexture;
 	public Tile[,] unitRange;
-	private Grid fullGrid;
 	
-	public void create(Grid grid, Tile tile, float gridHeight, bool side) {/* polymorphic method*/}
+	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	
-	protected void createUnit(string texturePath, string model, Grid grid, Tile tile, float scaling, float GridHeight, bool side){
-		gridHeight = GridHeight;
-		fullGrid = grid;
-		unitModel = Resources.Load ("Mekkano Assets/Models/RangedUnit");
-		Texture texture = (Texture2D)Resources.Load(texturePath);
-		unitModel.renderer.material.mainTexture = texture;
-		unitModel.name = "unit";
-
+	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side){
+		grid = Main.grid;
+		gridHeight = grid.height;
+		standardTexture = (Texture2D)Resources.Load (texturePath);
+		unitModel = Instantiate(Resources.Load(model)) as GameObject;
+		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.mainTexture = standardTexture;
+		Transform obj = unitModel.transform.GetChild(0); 
+		obj.gameObject.AddComponent<MeshCollider> ();
+		unitModel.transform.GetChild(0).name = "unit";
+		
 		unitModel.transform.position = new Vector3 (tile.getX(), gridHeight , tile.getZ());
 		unitModel.transform.localScale = scaling;
-		unitModel.transform.Rotate (Vector3 (0,side?+90:-90,0));
+		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
 	}
 	
 	public void moveToTile(Units unit, Tile targetTile){
@@ -45,25 +49,25 @@ public class Units : MonoBehaviour {
 	public void setRange(string onOff){
 		if (onOff == "on"){
 			unitRange = new Tile[3,3];
-			unitRange[0,0] = fullGrid.getGrid(currentTile.xCoord,currentTile.zCoord);
-			unitRange[0,1] = fullGrid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
-			unitRange[1,0] = fullGrid.getGrid(currentTile.xCoord+1,currentTile.zCoord);
-			unitRange[1,1] = fullGrid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);
+			unitRange[0,0] = grid.getGrid(currentTile.xCoord,currentTile.zCoord);
+			unitRange[0,1] = grid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
+			unitRange[1,0] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord);
+			unitRange[1,1] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);
 			
 			
 			for(int x = 0; x < 2; x++){
 				for (int z = 0; z < 2; z++)
 				if (unitRange[x,z].currentUnit == null){
-					unitRange[x,z].setTexture(Tile.tileTextureC);
+					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureC);
 				} else {
-					unitRange[x,z].setTexture(Tile.tileTextureD);
+					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureD);
 				}
 			}
 		} else if (onOff == "off"){
-			unitRange = fullGrid.getGrid();
-			for(int x = 0; x < fullGrid.getGridWidth(); x++){
-				for (int z = 0; z < fullGrid.getGridLength(); z++)
-					unitRange[x,z].setTexture(Tile.tileTextureA);
+			unitRange = grid.getGrid();
+			for(int x = 0; x < grid.getGridWidth(); x++){
+				for (int z = 0; z < grid.getGridLength(); z++)
+					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureA);
 			}
 		}
 	}
@@ -92,17 +96,12 @@ public class Units : MonoBehaviour {
 		return damage;
 	}
 	
-	/*public Geometry getGeometry() {
-		Geometry geo = (Geometry) unitModel;
-		return geo;
-	}
-	
 	public void setStandardTexture(){
-		((Geometry) unitModel).getMaterial().setTexture("DiffuseMap", unitStandardTexture);
+		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.color = new Color(0.800f,0.800f,0.800f,1);
+	}
+
+	public void setSelectedTexture(){
+		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.SetColor ("_Color", Color.green);
 	}
 	
-	public void setSelectedTexture(){
-		((Geometry) unitModel).getMaterial().setTexture("DiffuseMap", unitSelectedTexture);
-	}*/
-
 }
