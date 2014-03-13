@@ -1,19 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class TouchHandler : MonoBehaviour {
 
 	private Ray ray;
 	private RaycastHit hit;
 	private bool unitSelected = false;
+	private Quaternion rotation;
+	private bool moveUpdate = false;
 	private Units selectedUnit;
 	private Player currentPlayer;
+	private List<Units> movingUnits = new List<Units>();
 
 	void Start(){
 		currentPlayer = Main.player1;
 	}
 
+	public void moveToTile(Units unit, Tile targetTile, Tile tile){
+		if (unit != null){
+			selectedUnit.currentTile.currentUnit = null;
+			selectedUnit.currentTile = null;
+			targetTile.currentUnit = selectedUnit;
+			selectedUnit.currentTile = targetTile;
+			selectedUnit.targetTile = targetTile;
+			movingUnits.Add(selectedUnit);
+
+			foreach(Units units in movingUnits){
+				Vector3 unitPos = units.unitModel.transform.position;
+				float deltaZ = units.currentTile.getZ() - unitPos.z;
+				float deltaX = units.currentTile.getX() - unitPos.x;
+				float angle = (float)Mathf.Atan2((float)deltaX, (float)deltaZ);
+				rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angle, Vector3.up);
+				units.unitModel.transform.rotation = rotation;
+			}
+
+			selectedUnit.setStandardTexture();
+			selectedUnit.setRange("off");
+			tile.setTexture(Tile.tileTextureA);
+			
+			selectedUnit = null;
+		}
+	}
+
 	void Update(){
+
 		ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 
 		if (Input.GetMouseButtonDown (0) && Physics.Raycast(ray, out hit)) {
@@ -22,30 +53,34 @@ public class TouchHandler : MonoBehaviour {
 
 				foreach(Units unit in currentPlayer.units){
 					if (unit != null){
-						if(unit.unitModel.transform.GetChild(0) == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
-								if (selectedUnit != null){
-									selectedUnit.setStandardTexture(); // resetting texture to unselected units
-									selectedUnit.selected = false;
+						if(unit.unitModel.transform.GetChild(0) == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
+								if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
+									selectedUnit.setStandardTexture();
+									selectedUnit = null;
+									unitSelected = false;
+								} else { // if another unit is clicked, make that one selected and remove selected to the previous one
+									if (selectedUnit != null){
+										selectedUnit.setStandardTexture(); // resetting texture to unselected units
+										unitSelected = false;
+									}
+									unitSelected = true;
+									selectedUnit = unit;
+									selectedUnit.setSelectedTexture();
+									selectedUnit.setRange("on");
 								}
-								unitSelected = true;
-								selectedUnit = unit;
-								selectedUnit.selected = true;
-								selectedUnit.setSelectedTexture();
-								//selectedUnit.setRange("on");
 							}
-
 					}
 				}
 
 			}
 
 			if (hit.collider.gameObject.name == "tile" && unitSelected == true){
-
-				foreach(Tile tile in Main.grid){
+				foreach(Tile tile in Main.grid.getGrid()){
 					if (tile != null){
-						if(tile == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
+						if(tile.tile.transform == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
 							if (tile.currentUnit == null){
-								//units.Move(); -- make it happen plz
+								moveToTile(selectedUnit,tile,selectedUnit.currentTile);
+								unitSelected = false;
 							}
 						}
 						
@@ -55,6 +90,41 @@ public class TouchHandler : MonoBehaviour {
 			}
 
 		}
+
+		if (movingUnits.Count == 0){
+			moveUpdate = false;
+		} else {
+			moveUpdate = true;
+		}
+
+		if (moveUpdate == true){
+
+			foreach(Units unit in movingUnits){
+				Vector3 unitPos = unit.unitModel.transform.position;
+				
+				float deltaZ =  unit.currentTile.getZ() - unitPos.z;
+				float deltaX =  unit.currentTile.getX() - unitPos.x;
+				float angle = (Mathf.Atan2(deltaZ, deltaX));
+				
+				float moveX = (float) Mathf.Cos((float)angle);
+				float moveZ = (float) Mathf.Sin((float)angle);
+
+				if (Mathf.Abs(unitPos.x - unit.currentTile.getX()) <= Mathf.Abs(moveX/Units.speed) &&
+				    Mathf.Abs(unitPos.z - unit.currentTile.getZ()) <= Mathf.Abs(moveZ/Units.speed)){
+					unit.transform.position = new Vector3(unit.currentTile.getX(), unitPos.y, unit.currentTile.getZ());
+					if (unit.currentTile.getTexture().name != Tile.tileTextureA){
+						unit.currentTile.setTexture(Tile.tileTextureB);
+					}
+					movingUnits.Remove(unit);
+					break;
+				}
+
+				unit.unitModel.transform.position = new Vector3 (unitPos.x+moveX/Units.speed, 
+				                                                 unitPos.y, 
+				                                                 unitPos.z+moveZ/Units.speed);
+			}
+		}
+
 	}
 }
 

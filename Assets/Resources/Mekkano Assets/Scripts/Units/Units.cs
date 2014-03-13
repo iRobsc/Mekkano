@@ -7,7 +7,7 @@ public class Units : MonoBehaviour {
 	public bool selected;
 	public Tile currentTile, targetTile;
 	public double angle;
-	public static float speed = 100; // closer to 0 equals faster (100 is a good speed)
+	public static float speed = 10; // closer to 0 equals faster (10 is a good speed)
 	protected int tileRange, movementPoints;
 	protected float scale, x, z, damage;
 	private float gridHeight;
@@ -16,6 +16,7 @@ public class Units : MonoBehaviour {
 	private Grid grid;
 	private Texture standardTexture;
 	public Tile[,] unitRange;
+	private Vector3 rotation;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	
@@ -33,15 +34,7 @@ public class Units : MonoBehaviour {
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
 	}
-	
-	public void moveToTile(Units unit, Tile targetTile){
-		if (unit != null){
-			/*Mousepicking.moveUpdate = true;
-			Phases.mousePicking.selectedUnit = unit;
-			Phases.mousePicking.moveInitializing(targetTile);*/
-		}
-	}
-	
+
 	public void attack(Tile tile){
 		
 	}
@@ -53,21 +46,20 @@ public class Units : MonoBehaviour {
 			unitRange[0,1] = grid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
 			unitRange[1,0] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord);
 			unitRange[1,1] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);
-			
-			
+
 			for(int x = 0; x < 2; x++){
 				for (int z = 0; z < 2; z++)
 				if (unitRange[x,z].currentUnit == null){
-					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureC);
+					unitRange[x,z].setTexture(Tile.tileTextureC);
 				} else {
-					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureD);
+					unitRange[x,z].setTexture(Tile.tileTextureD);
 				}
 			}
 		} else if (onOff == "off"){
 			unitRange = grid.getGrid();
 			for(int x = 0; x < grid.getGridWidth(); x++){
 				for (int z = 0; z < grid.getGridLength(); z++)
-					unitRange[x,z].setTexture(unitRange[x,z].currentTile, Tile.tileTextureA);
+					unitRange[x,z].setTexture(Tile.tileTextureA);
 			}
 		}
 	}

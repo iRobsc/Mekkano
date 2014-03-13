@@ -8,9 +8,9 @@ public class Tile : MonoBehaviour{
 	public static float width = 2, length = 2;
 	public Units currentUnit = null;
 	public Texture texture;
-	public static string tileTextureA, tileTextureB, tileTextureC,tileTextureD;
+	public static string tileTextureA = "Mekkano Assets/Textures/tileA", tileTextureB, tileTextureC,tileTextureD = "Mekkano Assets/Textures/tileB";
 	private Material spriteMaterial;
-	public GameObject currentTile;
+	public GameObject tile;
 
 	public float getX(){
 		return x;
@@ -19,14 +19,10 @@ public class Tile : MonoBehaviour{
 	public float getZ(){
 		return z;
 	}
-	/*
+
 	public Texture getTexture(){
 		return texture;
 	}
-	
-	public Geometry getGeometry(){
-		return tile;
-	}*/
 	
 	public void setCoords(int X, int Z){
 		xCoord = X;
@@ -34,27 +30,9 @@ public class Tile : MonoBehaviour{
 	}
 	
 	public void createTile(float X, float Y ,float Z){
-		/*Quad quadShape = new Quad(width,length);
-		tile = new Geometry ("tile", quadShape);
-		setTexture(tileTextureA);
-		spriteMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-		spriteMaterial.setTexture("ColorMap", getTexture());
-		spriteMaterial.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-		getTexture().setMagFilter(Texture.MagFilter.Nearest);
-		
-		tile.setLocalTranslation(X,Y,Z);
-		
-		x = X;
-		z = Z;
-		
-		tile.rotate(-90*FastMath.DEG_TO_RAD, 0, 0);
-		tile.setQueueBucket(Bucket.Transparent);
-		tile.setMaterial(spriteMaterial);
-		
-		rootNode.attachChild(tile); */
 
-		GameObject tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
-		setTexture (tile, "Mekkano Assets/Textures/tileA");
+		tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
+		setTexture (tileTextureA);
 		tile.renderer.material.shader = Shader.Find ("Unlit/Transparent");
 		tile.name = "tile";
 
@@ -66,8 +44,8 @@ public class Tile : MonoBehaviour{
 		tile.transform.Rotate (new Vector3 (90,0,0));
 	}
 
-	public void setTexture(GameObject tile, string texturePath){
-		Texture texture = (Texture2D)Resources.Load(texturePath);
+	public void setTexture(string texturePath){
+		texture = (Texture2D)Resources.Load(texturePath);
 		tile.renderer.material.mainTexture = texture;
 	}
 
