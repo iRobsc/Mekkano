@@ -41,29 +41,48 @@ public class Units : MonoBehaviour {
 	
 	public void setRange(string onOff){
 		if (onOff == "on"){
-			unitRange = new Tile[3,3];
-			unitRange[0,0] = grid.getGrid(currentTile.xCoord,currentTile.zCoord);
-			unitRange[0,1] = grid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
-			unitRange[1,0] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord);
-			unitRange[1,1] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);
+			int range = 2;
+			unitRange = new Tile[range, range];
+			for(int x = 0; x < range+1; x++){
+				for(int y = 0; y < range+1; y++){
+					Debug.Log(tileInRange(x-range,y-range,currentTile.xCoord,currentTile.zCoord,range));
+					if(tileInRange(x-range,y-range,currentTile.xCoord,currentTile.zCoord,range)){
+						Debug.Log("bat");
+						unitRange[x,y] = grid.getGrid((currentTile.xCoord-range)+x,(currentTile.zCoord-range)+y);
+					}
+				}
+			}
 
-			for(int x = 0; x < 2; x++){
-				for (int z = 0; z < 2; z++)
-				if (unitRange[x,z].currentUnit == null){
-					unitRange[x,z].setTexture(Tile.tileTextureC);
-				} else {
-					unitRange[x,z].setTexture(Tile.tileTextureD);
+			/*unitRange[0,0] = grid.getGrid(currentTile.xCoord,currentTile.zCoord);
+			unitRange[0,1] = grid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
+			unitRange[1,0] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord); testu
+			unitRange[1,1] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);*/
+
+			for(int x = 0; x < range; x++){
+				for (int z = 0; z < range; z++){
+					if (unitRange[x,z] != null){
+						if (unitRange[x,z].currentUnit == null){
+							unitRange[x,z].setTexture(Tile.tileTextureC);
+						} else {
+							unitRange[x,z].setTexture(Tile.tileTextureD);
+						}
+					}
 				}
 			}
 		} else if (onOff == "off"){
-			unitRange = grid.getGrid();
-			for(int x = 0; x < grid.getGridWidth(); x++){
-				for (int z = 0; z < grid.getGridLength(); z++)
-					unitRange[x,z].setTexture(Tile.tileTextureA);
+				unitRange = grid.getGrid();
+				for(int x = 0; x < grid.getGridWidth(); x++){
+					for (int z = 0; z < grid.getGridLength(); z++)
+						unitRange[x,z].setTexture(Tile.tileTextureA);
+					}
 			}
-		}
 	}
-	
+
+	private bool tileInRange(int x, int y, int px, int py, int range){
+		Debug.Log(Mathf.Abs(px - x) + Mathf.Abs(py - y));
+		return (Mathf.Abs(px - x) + Mathf.Abs(py - y) < range);
+	}
+
 	public int getTileRange(){
 		return tileRange;
 	}

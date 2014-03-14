@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 public class TouchHandler : MonoBehaviour {
 
@@ -37,7 +38,7 @@ public class TouchHandler : MonoBehaviour {
 
 			selectedUnit.setStandardTexture();
 			selectedUnit.setRange("off");
-			tile.setTexture(Tile.tileTextureA);
+			targetTile.setTexture(Tile.tileTextureB);
 			
 			selectedUnit = null;
 		}
@@ -56,12 +57,14 @@ public class TouchHandler : MonoBehaviour {
 						if(unit.unitModel.transform.GetChild(0) == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
 								if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
 									selectedUnit.setStandardTexture();
+									selectedUnit.setRange("off");
 									selectedUnit = null;
 									unitSelected = false;
 								} else { // if another unit is clicked, make that one selected and remove selected to the previous one
 									if (selectedUnit != null){
 										selectedUnit.setStandardTexture(); // resetting texture to unselected units
 										unitSelected = false;
+										selectedUnit.setRange("off");
 									}
 									unitSelected = true;
 									selectedUnit = unit;
@@ -102,8 +105,8 @@ public class TouchHandler : MonoBehaviour {
 			foreach(Units unit in movingUnits){
 				Vector3 unitPos = unit.unitModel.transform.position;
 				
-				float deltaZ =  unit.currentTile.getZ() - unitPos.z;
-				float deltaX =  unit.currentTile.getX() - unitPos.x;
+				float deltaZ = unit.currentTile.getZ() - unitPos.z;
+				float deltaX = unit.currentTile.getX() - unitPos.x;
 				float angle = (Mathf.Atan2(deltaZ, deltaX));
 				
 				float moveX = (float) Mathf.Cos((float)angle);
@@ -112,8 +115,8 @@ public class TouchHandler : MonoBehaviour {
 				if (Mathf.Abs(unitPos.x - unit.currentTile.getX()) <= Mathf.Abs(moveX/Units.speed) &&
 				    Mathf.Abs(unitPos.z - unit.currentTile.getZ()) <= Mathf.Abs(moveZ/Units.speed)){
 					unit.transform.position = new Vector3(unit.currentTile.getX(), unitPos.y, unit.currentTile.getZ());
-					if (unit.currentTile.getTexture().name != Tile.tileTextureA){
-						unit.currentTile.setTexture(Tile.tileTextureB);
+					if (AssetDatabase.GetAssetPath(unit.currentTile.getTexture()) != Tile.tileTextureA){
+						unit.currentTile.setTexture(Tile.tileTextureA);
 					}
 					movingUnits.Remove(unit);
 					break;
