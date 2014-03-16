@@ -81,7 +81,7 @@ public class TouchHandler : MonoBehaviour {
 				foreach(Tile tile in Main.grid.getGrid()){
 					if (tile != null){
 						if(tile.tile.transform == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
-							if (tile.currentUnit == null){
+							if (tile.currentUnit == null && selectedUnit.inRange(tile)){
 								moveToTile(selectedUnit,tile,selectedUnit.currentTile);
 								unitSelected = false;
 							}
@@ -114,10 +114,15 @@ public class TouchHandler : MonoBehaviour {
 
 				if (Mathf.Abs(unitPos.x - unit.currentTile.getX()) <= Mathf.Abs(moveX/Units.speed) &&
 				    Mathf.Abs(unitPos.z - unit.currentTile.getZ()) <= Mathf.Abs(moveZ/Units.speed)){
+
 					unit.transform.position = new Vector3(unit.currentTile.getX(), unitPos.y, unit.currentTile.getZ());
-					if (AssetDatabase.GetAssetPath(unit.currentTile.getTexture()) != Tile.tileTextureA){
+
+					if (unit.currentTile.getTexture() != unit.currentTile.getTexture(Tile.tileTextureD) && 
+					    unit.currentTile.getTexture() != unit.currentTile.getTexture(Tile.tileTextureC)){
 						unit.currentTile.setTexture(Tile.tileTextureA);
 					}
+						else unit.currentTile.setTexture(Tile.tileTextureD);
+
 					movingUnits.Remove(unit);
 					break;
 				}
@@ -127,7 +132,6 @@ public class TouchHandler : MonoBehaviour {
 				                                                 unitPos.z+moveZ/Units.speed);
 			}
 		}
-
 	}
 }
 

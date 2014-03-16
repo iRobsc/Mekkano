@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Main : MonoBehaviour {
 
-	private static int gridXlength = 15, gridZlength = 10, xPos = 0, zPos = 0;
+	public static int gridXlength = 15, gridZlength = 10, xPos = 0, zPos = 0;
 	private static float gridHeight = 0.1f;
 	public static Player player1, player2;
 	public static Grid grid;

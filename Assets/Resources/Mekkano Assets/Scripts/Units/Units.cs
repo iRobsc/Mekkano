@@ -15,7 +15,7 @@ public class Units : MonoBehaviour {
 	private Texture unitStandardTexture, unitSelectedTexture;
 	private Grid grid;
 	private Texture standardTexture;
-	public Tile[,] unitRange;
+	private Tile[,] unitRange;
 	private Vector3 rotation;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
@@ -42,24 +42,25 @@ public class Units : MonoBehaviour {
 	public void setRange(string onOff){
 		if (onOff == "on"){
 			int range = 2;
-			unitRange = new Tile[range, range];
-			for(int x = 0; x < range+1; x++){
-				for(int y = 0; y < range+1; y++){
-					Debug.Log(tileInRange(x-range,y-range,currentTile.xCoord,currentTile.zCoord,range));
-					if(tileInRange(x-range,y-range,currentTile.xCoord,currentTile.zCoord,range)){
-						Debug.Log("bat");
-						unitRange[x,y] = grid.getGrid((currentTile.xCoord-range)+x,(currentTile.zCoord-range)+y);
+			int xyLength = range+(range+1);
+			unitRange = new Tile[xyLength, xyLength];
+			for(int x = 0; x < xyLength; x++){
+				for(int y = 0; y < xyLength; y++){
+					if(tileInRange((0-range)+x, (0-range)+y, range)){
+						if ((currentTile.xCoord-range)+x >= 0 && 
+						    (currentTile.xCoord-range)+x < Main.gridXlength &&
+						    (currentTile.zCoord-range)+y >= 0 &&
+						    (currentTile.zCoord-range)+y < Main.gridZlength){
+							unitRange[x,y] = grid.getGrid(((currentTile.xCoord-range)+x),((currentTile.zCoord-range)+y));
+						}
 					}
 				}
 			}
 
-			/*unitRange[0,0] = grid.getGrid(currentTile.xCoord,currentTile.zCoord);
-			unitRange[0,1] = grid.getGrid(currentTile.xCoord,currentTile.zCoord+1);
-			unitRange[1,0] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord); testu
-			unitRange[1,1] = grid.getGrid(currentTile.xCoord+1,currentTile.zCoord+1);*/
+			//Debug.Log((0-range)+x+" : "+((0-range)+y));
 
-			for(int x = 0; x < range; x++){
-				for (int z = 0; z < range; z++){
+			for(int x = 0; x < xyLength; x++){
+				for (int z = 0; z < xyLength; z++){
 					if (unitRange[x,z] != null){
 						if (unitRange[x,z].currentUnit == null){
 							unitRange[x,z].setTexture(Tile.tileTextureC);
@@ -78,9 +79,17 @@ public class Units : MonoBehaviour {
 			}
 	}
 
-	private bool tileInRange(int x, int y, int px, int py, int range){
-		Debug.Log(Mathf.Abs(px - x) + Mathf.Abs(py - y));
-		return (Mathf.Abs(px - x) + Mathf.Abs(py - y) < range);
+	private bool tileInRange(int x, int y, int range){
+		if (range < 4) {
+			return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
+		} else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
+	}
+
+	public bool inRange(Tile tile){
+		foreach (Tile currentTile in unitRange) {
+			if (currentTile == tile) return true;
+		}
+		return false;
 	}
 
 	public int getTileRange(){

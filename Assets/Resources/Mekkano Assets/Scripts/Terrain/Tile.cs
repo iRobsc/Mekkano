@@ -8,7 +8,8 @@ public class Tile : MonoBehaviour{
 	public static float width = 2, length = 2;
 	public Units currentUnit = null;
 	public Texture texture;
-	public static string tileTextureA = "Mekkano Assets/Textures/tileA", tileTextureB, tileTextureC,tileTextureD = "Mekkano Assets/Textures/tileB";
+	private Texture currentTexture;
+	public static string tileTextureA = "Mekkano Assets/Textures/tileA", tileTextureB = "Mekkano Assets/Textures/tileB", tileTextureC = "Mekkano Assets/Textures/tileC",tileTextureD = "Mekkano Assets/Textures/tileD";
 	private Material spriteMaterial;
 	public GameObject tile;
 
@@ -18,6 +19,11 @@ public class Tile : MonoBehaviour{
 	
 	public float getZ(){
 		return z;
+	}
+
+	public Texture getTexture(string tileTexture){
+		currentTexture = (Texture2D)Resources.Load (tileTexture);
+		return currentTexture;
 	}
 
 	public Texture getTexture(){
