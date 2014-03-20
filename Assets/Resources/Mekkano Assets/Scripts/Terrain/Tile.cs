@@ -5,7 +5,7 @@ public class Tile : MonoBehaviour{
 	
 	private float x, z;
 	public int xCoord, zCoord;
-	public static float width = 2, length = 2;
+	public static float width = 2.5f, length = 2.5f;
 	public Units currentUnit = null;
 	public Texture texture;
 	private Texture currentTexture;
@@ -55,12 +55,4 @@ public class Tile : MonoBehaviour{
 		tile.renderer.material.mainTexture = texture;
 	}
 
-	/*public void setTexture(String textureName){
-		texture = assetManager.loadTexture(textureName);
-		spriteMaterial = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-		spriteMaterial.setTexture("ColorMap", getTexture());
-		getTexture().setMagFilter(Texture.MagFilter.Nearest);
-		spriteMaterial.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
-		tile.setMaterial(spriteMaterial);
-	}*/
 }

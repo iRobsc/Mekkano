@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 
 public class TouchHandler : MonoBehaviour {
 
@@ -12,17 +11,26 @@ public class TouchHandler : MonoBehaviour {
 	private bool moveUpdate = false;
 	private Units selectedUnit;
 	private Player currentPlayer;
-	private List<Units> movingUnits = new List<Units>();
+	private List<Units> movingUnits = new List<Units>(), bothPlayerUnits;
 
+	public static bool unitSelection = false;
+	public static bool unitMovement = false;
+	public static bool unitAttacking = false;
+
+	public static bool resetSelection = false;
+	
 	void Start(){
-		currentPlayer = Main.player1;
+		currentPlayer = Main.currentPlayer;
+		bothPlayerUnits = Main.bothPlayerUnits;
 	}
 
 	public void moveToTile(Units unit, Tile targetTile, Tile tile){
 		if (unit != null){
 			selectedUnit.currentTile.currentUnit = null;
+			selectedUnit.currentTile.tile.name = "tile";
 			selectedUnit.currentTile = null;
 			targetTile.currentUnit = selectedUnit;
+			targetTile.tile.name = "unitTile";
 			selectedUnit.currentTile = targetTile;
 			selectedUnit.targetTile = targetTile;
 			movingUnits.Add(selectedUnit);
@@ -44,32 +52,52 @@ public class TouchHandler : MonoBehaviour {
 		}
 	}
 
+	private void resetUnitSelection(){
+		selectedUnit.setStandardTexture();
+		selectedUnit.setRange("off");
+		selectedUnit = null;
+		unitSelected = false;
+	}
+
+	private void setUnitSelection(Units unit){
+		unitSelected = true;
+		selectedUnit = unit;
+		selectedUnit.setSelectedTexture();
+		selectedUnit.setRange("on");
+	}
+	
 	void Update(){
 
+		if (resetSelection == true && selectedUnit != null) {
+			resetUnitSelection();
+		}
+		resetSelection = false;
+		
 		ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 
 		if (Input.GetMouseButtonDown (0) && Physics.Raycast(ray, out hit)) {
 
-			if (hit.collider.name == "unit"){
+			if ((hit.collider.name == "unit" || hit.collider.gameObject.name == "unitTile") && unitSelection == true){
 
-				foreach(Units unit in currentPlayer.units){
+				foreach(Units unit in bothPlayerUnits){ // change to all units
 					if (unit != null){
-						if(unit.unitModel.transform.GetChild(0) == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
+						if((unit.unitModel.transform.GetChild(0) == hit.collider.transform && movingUnits.Contains(unit) == false) ||
+						   (unit.currentTile.tile.transform == hit.collider.transform && movingUnits.Contains(unit) == false )){ // searching for the selected geometry in the currentUnit's array
 								if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
-									selectedUnit.setStandardTexture();
-									selectedUnit.setRange("off");
-									selectedUnit = null;
-									unitSelected = false;
-								} else { // if another unit is clicked, make that one selected and remove selected to the previous one
-									if (selectedUnit != null){
-										selectedUnit.setStandardTexture(); // resetting texture to unselected units
-										unitSelected = false;
-										selectedUnit.setRange("off");
+									resetUnitSelection();
+								} else { // if another unit is clicked, make that one selected and remove selected to the previous one or attack if the unit is on the other team
+									if (unit.playerIndex == Player.playerIndex){ 
+										if (selectedUnit != null){ // if there's already an unit selection, then reset that selection
+											resetUnitSelection();
+										}
+										setUnitSelection(unit);
+										print("selecting n stuff");
 									}
-									unitSelected = true;
-									selectedUnit = unit;
-									selectedUnit.setSelectedTexture();
-									selectedUnit.setRange("on");
+									else if (unit.playerIndex != Player.playerIndex && TouchHandler.unitAttacking == true){ // if the unit is on the other team, then set it to the units target
+										selectedUnit.attackTarget = unit;
+										unit.setSelectedTexture();
+
+									}
 								}
 							}
 					}
@@ -77,7 +105,7 @@ public class TouchHandler : MonoBehaviour {
 
 			}
 
-			if (hit.collider.gameObject.name == "tile" && unitSelected == true){
+			if (hit.collider.gameObject.name == "tile" && unitSelected == true && unitMovement == true){
 				foreach(Tile tile in Main.grid.getGrid()){
 					if (tile != null){
 						if(tile.tile.transform == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array

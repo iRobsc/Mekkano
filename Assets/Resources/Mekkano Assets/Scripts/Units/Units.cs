@@ -11,16 +11,20 @@ public class Units : MonoBehaviour {
 	protected int tileRange, movementPoints;
 	protected float scale, x, z, damage;
 	private float gridHeight;
-	public GameObject unitModel;
 	private Texture unitStandardTexture, unitSelectedTexture;
 	private Grid grid;
 	private Texture standardTexture;
 	private Tile[,] unitRange;
 	private Vector3 rotation;
+
+	public GameObject unitModel;
+	public int range;
+	public int playerIndex;
+	public Units attackTarget;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	
-	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side){
+	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side, int unitRange){
 		grid = Main.grid;
 		gridHeight = grid.height;
 		standardTexture = (Texture2D)Resources.Load (texturePath);
@@ -29,10 +33,13 @@ public class Units : MonoBehaviour {
 		Transform obj = unitModel.transform.GetChild(0); 
 		obj.gameObject.AddComponent<MeshCollider> ();
 		unitModel.transform.GetChild(0).name = "unit";
-		
+
 		unitModel.transform.position = new Vector3 (tile.getX(), gridHeight , tile.getZ());
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
+
+		range = unitRange;
+
 	}
 
 	public void attack(Tile tile){
@@ -41,7 +48,6 @@ public class Units : MonoBehaviour {
 	
 	public void setRange(string onOff){
 		if (onOff == "on"){
-			int range = 2;
 			int xyLength = range+(range+1);
 			unitRange = new Tile[xyLength, xyLength];
 			for(int x = 0; x < xyLength; x++){
@@ -65,7 +71,11 @@ public class Units : MonoBehaviour {
 						if (unitRange[x,z].currentUnit == null){
 							unitRange[x,z].setTexture(Tile.tileTextureC);
 						} else {
-							unitRange[x,z].setTexture(Tile.tileTextureD);
+							if (TouchHandler.unitSelection){
+								unitRange[x,z].setTexture(Tile.tileTextureD);
+							} if (TouchHandler.unitAttacking && unitRange[x,z].currentUnit.playerIndex != playerIndex){
+								unitRange[x,z].setTexture(Tile.tileTextureB);
+							}
 						}
 					}
 				}

@@ -5,6 +5,7 @@ public class Player : MonoBehaviour {
 
 	public int unitsAmount = 10, lines, lineStart;
 	public Units[,] units;
+	public static int playerIndex;
 
 	public void createUnits(int gridXlength, int gridZlength, Grid grid, float gridHeight, bool side){
 		
@@ -28,10 +29,15 @@ public class Player : MonoBehaviour {
 			units[i-currentColumn*gridZlength,currentColumn].create   // placing the units on different locations depending on if it's player 1 or 2
 				(grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),
 				             i-currentColumn*gridZlength), side);
+
+			units[i-currentColumn*gridZlength,currentColumn].playerIndex = (side?1:2);
 			
 			grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),    // adding the current unit to the tile so we can handle the tile as the unit later
 			             i-currentColumn*gridZlength).currentUnit = 
 				units[i-currentColumn*gridZlength,currentColumn];
+
+			grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),    // changing the name so we can handle the unit tiles differently when clicked
+			             i-currentColumn*gridZlength).tile.name = "unitTile";
 			
 			units[i-currentColumn*gridZlength,(currentColumn*1)].currentTile = 
 				grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1), // adding the current tile to the unit
