@@ -13,11 +13,11 @@ public class Tile : MonoBehaviour{
 	private Material spriteMaterial;
 	public GameObject tile;
 
-	public float getX(){
+	public float getXindex(){
 		return x;
 	}
 	
-	public float getZ(){
+	public float getZindex(){
 		return z;
 	}
 
@@ -34,20 +34,32 @@ public class Tile : MonoBehaviour{
 		xCoord = X;
 		zCoord = Z;
 	}
+
+	public float getXpos(){
+		return tile.transform.localPosition.x;
+	}
+
+	public float getYpos(){
+		return tile.transform.localPosition.y;
+	}
+
+	public float getZpos(){
+		return tile.transform.localPosition.z;
+	}
 	
-	public void createTile(float X, float Y ,float Z){
+	public void createTile(float x, float y, float z){
 
 		tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
 		setTexture (tileTextureA);
 		tile.renderer.material.shader = Shader.Find ("Unlit/Transparent");
 		tile.name = "tile";
 
-		x = X;
-		z = Z;
-
 		tile.transform.localScale = new Vector3 (width, length, 1);
-		tile.transform.localPosition = new Vector3 (x, Y, z);
+		tile.transform.localPosition = new Vector3 (x, y, z);
 		tile.transform.Rotate (new Vector3 (90,0,0));
+
+		this.x = x;
+		this.z = z;
 	}
 
 	public void setTexture(string texturePath){

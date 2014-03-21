@@ -24,6 +24,13 @@ public class TouchHandler : MonoBehaviour {
 		bothPlayerUnits = Main.bothPlayerUnits;
 	}
 
+	public static float calculateAngle(float firstPosX, float firstPosZ, float secondPosX, float secondPosZ){
+		float deltaZ = firstPosZ - secondPosZ;
+		float deltaX = firstPosX - secondPosX;
+		float angle;
+		return angle = (float)(Mathf.Atan2(-deltaX, -deltaZ));
+	}
+
 	public void moveToTile(Units unit, Tile targetTile, Tile tile){
 		if (unit != null){
 			selectedUnit.currentTile.currentUnit = null;
@@ -36,16 +43,11 @@ public class TouchHandler : MonoBehaviour {
 			movingUnits.Add(selectedUnit);
 
 			foreach(Units units in movingUnits){
-				Vector3 unitPos = units.unitModel.transform.position;
-				float deltaZ = units.currentTile.getZ() - unitPos.z;
-				float deltaX = units.currentTile.getX() - unitPos.x;
-				float angle = (float)Mathf.Atan2((float)deltaX, (float)deltaZ);
-				rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * angle, Vector3.up);
-				units.unitModel.transform.rotation = rotation;
+				units.faceTarget(units, units.currentTile);
 			}
 
 			selectedUnit.setStandardTexture();
-			selectedUnit.setRange("off");
+			selectedUnit.setRange(false, true);
 			targetTile.setTexture(Tile.tileTextureB);
 			
 			selectedUnit = null;
@@ -54,7 +56,7 @@ public class TouchHandler : MonoBehaviour {
 
 	private void resetUnitSelection(){
 		selectedUnit.setStandardTexture();
-		selectedUnit.setRange("off");
+		selectedUnit.setRange(false, true);
 		selectedUnit = null;
 		unitSelected = false;
 	}
@@ -63,7 +65,8 @@ public class TouchHandler : MonoBehaviour {
 		unitSelected = true;
 		selectedUnit = unit;
 		selectedUnit.setSelectedTexture();
-		selectedUnit.setRange("on");
+		if(Phases.phase == 1) selectedUnit.setRange(true, true);
+		else selectedUnit.setRange(true, false);
 	}
 	
 	void Update(){
@@ -77,32 +80,38 @@ public class TouchHandler : MonoBehaviour {
 
 		if (Input.GetMouseButtonDown (0) && Physics.Raycast(ray, out hit)) {
 
-			if ((hit.collider.name == "unit" || hit.collider.gameObject.name == "unitTile") && unitSelection == true){
+			if ((hit.collider.name == "unit" || hit.collider.gameObject.name == "unitTile") && unitSelection == true){ // fråga till willebille går ej igenom units om units inte är med?
 
 				foreach(Units unit in bothPlayerUnits){ // change to all units
 					if (unit != null){
 						if((unit.unitModel.transform.GetChild(0) == hit.collider.transform && movingUnits.Contains(unit) == false) ||
 						   (unit.currentTile.tile.transform == hit.collider.transform && movingUnits.Contains(unit) == false )){ // searching for the selected geometry in the currentUnit's array
-								if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
-									resetUnitSelection();
-								} else { // if another unit is clicked, make that one selected and remove selected to the previous one or attack if the unit is on the other team
-									if (unit.playerIndex == Player.playerIndex){ 
-										if (selectedUnit != null){ // if there's already an unit selection, then reset that selection
-											resetUnitSelection();
+							if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
+								resetUnitSelection();
+							} else { // if another unit is clicked, make that one selected and remove selected to the previous one or attack if the unit is on the other team
+								if (unit.playerIndex == Player.playerIndex){ 
+									if (selectedUnit != null){ // if there's already an unit selection, then reset that selection
+										resetUnitSelection();
+									}
+									setUnitSelection(unit);
+								}
+								else if (unit.playerIndex != Player.playerIndex &&  // if the unit is on the other team, then set it to the units target
+								         TouchHandler.unitAttacking == true &&
+								         selectedUnit != null){
+										if(selectedUnit.inRange(unit.currentTile)){
+											if(selectedUnit.attackTarget != null) {
+												selectedUnit.attackTarget.setStandardTexture();
+											}
+											selectedUnit.attackTarget = unit;
+											selectedUnit.faceTarget(selectedUnit, selectedUnit.attackTarget);
+											selectedUnit.targetLine(selectedUnit.currentTile, selectedUnit.attackTarget.currentTile);
+											unit.setSelectedTexture();
 										}
-										setUnitSelection(unit);
-										print("selecting n stuff");
-									}
-									else if (unit.playerIndex != Player.playerIndex && TouchHandler.unitAttacking == true){ // if the unit is on the other team, then set it to the units target
-										selectedUnit.attackTarget = unit;
-										unit.setSelectedTexture();
-
-									}
 								}
 							}
+						}
 					}
 				}
-
 			}
 
 			if (hit.collider.gameObject.name == "tile" && unitSelected == true && unitMovement == true){
@@ -114,12 +123,9 @@ public class TouchHandler : MonoBehaviour {
 								unitSelected = false;
 							}
 						}
-						
 					}
 				}
-
 			}
-
 		}
 
 		if (movingUnits.Count == 0){
@@ -132,18 +138,18 @@ public class TouchHandler : MonoBehaviour {
 
 			foreach(Units unit in movingUnits){
 				Vector3 unitPos = unit.unitModel.transform.position;
-				
-				float deltaZ = unit.currentTile.getZ() - unitPos.z;
-				float deltaX = unit.currentTile.getX() - unitPos.x;
+
+				float deltaZ = unit.currentTile.getZindex() - unitPos.z;
+				float deltaX = unit.currentTile.getXindex() - unitPos.x;
 				float angle = (Mathf.Atan2(deltaZ, deltaX));
 				
 				float moveX = (float) Mathf.Cos((float)angle);
 				float moveZ = (float) Mathf.Sin((float)angle);
 
-				if (Mathf.Abs(unitPos.x - unit.currentTile.getX()) <= Mathf.Abs(moveX/Units.speed) &&
-				    Mathf.Abs(unitPos.z - unit.currentTile.getZ()) <= Mathf.Abs(moveZ/Units.speed)){
+				if (Mathf.Abs(unitPos.x - unit.currentTile.getXindex()) <= Mathf.Abs(moveX/Units.speed) &&
+				    Mathf.Abs(unitPos.z - unit.currentTile.getZindex()) <= Mathf.Abs(moveZ/Units.speed)){
 
-					unit.transform.position = new Vector3(unit.currentTile.getX(), unitPos.y, unit.currentTile.getZ());
+					unit.transform.position = new Vector3(unit.currentTile.getXindex(), unitPos.y, unit.currentTile.getZindex());
 
 					if (unit.currentTile.getTexture() != unit.currentTile.getTexture(Tile.tileTextureD) && 
 					    unit.currentTile.getTexture() != unit.currentTile.getTexture(Tile.tileTextureC)){
@@ -162,140 +168,3 @@ public class TouchHandler : MonoBehaviour {
 		}
 	}
 }
-
-/*private Camera cam = new Camera();  && hit.collider.gameObject.name == "unit"
-	private Player currentPlayer;
-	private Grid grid;
-	private GameObject selectedGeo;
-	private Ray ray;
-	private List<Units> movingUnits;
-	private Quaternion rotation = new Quaternion();
-	public Units selectedUnit;
-	public bool unitSelection = false, unitMovement = false;
-	public static bool moveUpdate;
-	
-	public Mousepicking(Camera camera, Player currentPlayer, Grid grid){
-	}
-	
-	public void initialize(){
-		inputManager.addMapping("clicked", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-		inputManager.addListener(actionListener,"clicked");
-	}
-	
-	public void moveInitializing(Tile tile){
-		if (tile.currentUnit == null){
-			
-			selectedUnit.currentTile.currentUnit = null;
-			selectedUnit.currentTile = null;
-			tile.currentUnit = selectedUnit;
-			selectedUnit.currentTile = tile;
-			selectedUnit.targetTile = tile;
-			movingUnits.add(selectedUnit);
-			
-			for(Units unit : movingUnits){
-				Vector3f unitPos = unit.getGeometry().getLocalTranslation();
-				float deltaZ = unit.currentTile.getZ() - unitPos.z;
-				float deltaX = unit.currentTile.getX() - unitPos.x;
-				double angle = Math.atan2(deltaX, deltaZ);
-				rotation.fromAngleAxis((float) angle, new Vector3f(0,1,0));
-				unit.getGeometry().setLocalRotation(rotation);
-			}
-			
-			selectedUnit.setStandardTexture();
-			selectedUnit.setRange("off");
-			tile.setTexture(Tile.tileTextureB);
-			
-			selectedUnit = null;
-		}
-	}
-	
-	public void updateUnits(){ // called by simpleUpdate if moveUpdate = true
-		for(Units unit : movingUnits){
-			Vector3f unitPos = unit.getGeometry().getLocalTranslation();
-			
-			float deltaZ =  unit.currentTile.getZ() - unitPos.z;
-			float deltaX =  unit.currentTile.getX() - unitPos.x;
-			double angle = Math.toDegrees(Math.atan2(deltaZ, deltaX));
-			
-			float moveX = (float) Math.cos(Math.toRadians(angle));
-			float moveZ = (float) Math.sin(Math.toRadians(angle));
-			
-			if (Math.abs(unitPos.x - unit.currentTile.getX()) <= Math.abs(moveX/Units.speed) &&
-			    Math.abs(unitPos.z - unit.currentTile.getZ()) <= Math.abs(moveZ/Units.speed)){
-				unit.getGeometry().setLocalTranslation
-					(unit.currentTile.getX(), unitPos.y, unit.currentTile.getZ());
-				if (unit.currentTile.getTexture().getName() != Tile.tileTextureD){
-					unit.currentTile.setTexture(Tile.tileTextureA);
-				}
-				movingUnits.remove(unit);
-				break;
-			}
-			
-			unit.getGeometry().setLocalTranslation
-				(unitPos.x+moveX/Units.speed, 
-				 unitPos.y, 
-				 unitPos.z+moveZ/Units.speed);
-		}
-	}
-	
-	ActionListener actionListener = new ActionListener(){
-		@Override
-		public void onAction(String name, boolean keyPressed, float tpf) {
-			if(name.equals("clicked") && !keyPressed){
-				CollisionResults collisionResults = new CollisionResults();
-				
-				Vector2f click2d   = inputManager.getCursorPosition();
-				Vector3f click3d   = cam.getWorldCoordinates(new Vector2f(click2d.x,click2d.y), 0).clone();
-				Vector3f direction = cam.getWorldCoordinates(new Vector2f(click2d.x,click2d.y+0.1f), 1).subtractLocal(click3d).normalizeLocal();
-				
-				ray = new Ray(click3d, direction);
-				
-				rootNode.collideWith(ray, collisionResults);
-				
-				if (collisionResults.size() > 0){
-					selectedGeo = collisionResults.getClosestCollision().getGeometry();
-					
-					if (unitSelection){
-						for(Units[] i: currentPlayer.units){ // Finding the unit index from mouse picking the geometry
-							for(Units unit : i){
-								if (unit != null && selectedGeo != null){
-									if (unit.getGeometry() == selectedGeo && movingUnits.contains(unit) == false){
-										if (selectedUnit != null){
-											selectedUnit.setStandardTexture(); // resetting texture to unselected units
-											selectedUnit.selected = false;
-										}
-										selectedUnit = unit;
-										selectedUnit.selected = true;
-										selectedUnit.setRange("on");
-									}
-								}
-							}
-						}	
-						if (selectedUnit != null){
-							selectedUnit.setSelectedTexture(); 
-						}
-					}	
-					
-					if (unitMovement && selectedUnit != null){ // clicking the tile while having a unit selected
-						for(Tile[] i: grid.getGrid()){ // Finding the unit index from mouse picking the geometry
-							for(Tile tile : i){
-								if (tile != null && selectedGeo != null && tile.currentUnit == null){
-									if (tile.getGeometry() == selectedGeo){
-										moveInitializing(tile);
-									}
-								}
-							}
-						}
-					}
-					
-					if (movingUnits.isEmpty()){
-						moveUpdate = false;
-					} else {
-						moveUpdate = true;
-					}
-					
-				}
-			}
-			
-		}
-	};*/

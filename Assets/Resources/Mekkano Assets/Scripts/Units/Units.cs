@@ -17,14 +17,16 @@ public class Units : MonoBehaviour {
 	private Tile[,] unitRange;
 	private Vector3 rotation;
 
+	private GameObject attackLine;
+
 	public GameObject unitModel;
-	public int range;
+	public int moveRange, attackRange;
 	public int playerIndex;
 	public Units attackTarget;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	
-	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side, int unitRange){
+	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side, int moveRange, int attackRange){
 		grid = Main.grid;
 		gridHeight = grid.height;
 		standardTexture = (Texture2D)Resources.Load (texturePath);
@@ -34,20 +36,64 @@ public class Units : MonoBehaviour {
 		obj.gameObject.AddComponent<MeshCollider> ();
 		unitModel.transform.GetChild(0).name = "unit";
 
-		unitModel.transform.position = new Vector3 (tile.getX(), gridHeight , tile.getZ());
+		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
 
-		range = unitRange;
-
+		this.moveRange = moveRange;
+		this.attackRange = attackRange;
 	}
 
 	public void attack(Tile tile){
 		
 	}
-	
-	public void setRange(string onOff){
-		if (onOff == "on"){
+
+	public void targetLine(Tile currentTile, Tile targetTile){
+
+		float deltaX = currentTile.getXpos()-targetTile.getXpos();
+		float deltaZ = currentTile.getZpos()-targetTile.getZpos();
+
+		float distance = Mathf.Sqrt(Mathf.Pow(deltaX,2) + 
+		                            Mathf.Pow(deltaZ,2));
+
+		if (attackLine == null)	attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
+
+		attackLine.transform.position = new Vector3 (currentTile.getXpos()-deltaX/2,
+		                                                  currentTile.getYpos()+0.1f, 
+														  currentTile.getZpos()-deltaZ/2);
+
+		attackLine.transform.localScale = new Vector3(0.2f,distance,0);
+		attackLine.transform.localRotation = Quaternion.Euler(new Vector3 
+		                                    (90, TouchHandler.calculateAngle
+		 									(currentTile.getXpos(), 
+		                                     currentTile.getZpos(), 
+		                                     targetTile.getXpos(), 
+		                                     targetTile.getZpos()) * Mathf.Rad2Deg, 0));
+	}
+
+	public void removeLine(){
+		Destroy(attackLine);
+	}
+
+	public void faceTarget(Units unit, Tile targetTile){
+		Vector3 unitPos = unit.unitModel.transform.position;
+		unit.unitModel.transform.localRotation = Quaternion.Euler(new Vector3 
+			 									(0, TouchHandler.calculateAngle(
+												 unit.unitModel.transform.position.x, 
+											   	 unit.unitModel.transform.position.z, 
+		                                         targetTile.getXpos(), 
+		                                         targetTile.getZpos()) * Mathf.Rad2Deg, 0));
+	}
+
+	public void faceTarget(Units unit, Units targetUnit){
+		faceTarget(unit, targetUnit.currentTile);
+	}
+
+	public void setRange(bool removeRange, bool moveOrAttack){
+		int range;
+		if (moveOrAttack == true) range = moveRange;
+		else range = attackRange;
+		if (removeRange == true){
 			int xyLength = range+(range+1);
 			unitRange = new Tile[xyLength, xyLength];
 			for(int x = 0; x < xyLength; x++){
@@ -62,8 +108,6 @@ public class Units : MonoBehaviour {
 					}
 				}
 			}
-
-			//Debug.Log((0-range)+x+" : "+((0-range)+y));
 
 			for(int x = 0; x < xyLength; x++){
 				for (int z = 0; z < xyLength; z++){
@@ -80,7 +124,7 @@ public class Units : MonoBehaviour {
 					}
 				}
 			}
-		} else if (onOff == "off"){
+		} else if (removeRange == false){
 				unitRange = grid.getGrid();
 				for(int x = 0; x < grid.getGridWidth(); x++){
 					for (int z = 0; z < grid.getGridLength(); z++)
@@ -90,9 +134,9 @@ public class Units : MonoBehaviour {
 	}
 
 	private bool tileInRange(int x, int y, int range){
-		if (range < 4) {
-			return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
-		} else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
+		if (range == 1) return true;
+		else if (range < 4) return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
+		else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
 	}
 
 	public bool inRange(Tile tile){
