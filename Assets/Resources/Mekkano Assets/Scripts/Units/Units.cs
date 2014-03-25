@@ -1,35 +1,39 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Units : MonoBehaviour {
-	
-	public int hp;
+
 	public bool selected;
 	public Tile currentTile, targetTile;
 	public double angle;
 	public static float speed = 10; // closer to 0 equals faster (10 is a good speed)
 	protected int tileRange, movementPoints;
-	protected float scale, x, z, damage;
+	protected float scale, x, z;
 	private float gridHeight;
 	private Texture unitStandardTexture, unitSelectedTexture;
 	private Grid grid;
 	private Texture standardTexture;
 	private Tile[,] unitRange;
 	private Vector3 rotation;
-
-	private GameObject attackLine;
+	public GameObject attackLine;
+	public static List<GameObject> lines = new List<GameObject> ();
 
 	public GameObject unitModel;
-	public int moveRange, attackRange;
 	public int playerIndex;
 	public Units attackTarget;
+
+	// variables from the subclass
+	protected Vector3 scaling;
+	protected string model, texture;
+	public int moveRange, attackRange, damage, hp;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
-	
-	protected void createUnit(string texturePath, string model, Tile tile, Vector3 scaling, bool side, int moveRange, int attackRange){
+
+	protected void createUnit(Tile tile, bool side){
 		grid = Main.grid;
 		gridHeight = grid.height;
-		standardTexture = (Texture2D)Resources.Load (texturePath);
+		standardTexture = (Texture2D)Resources.Load (texture);
 		unitModel = Instantiate(Resources.Load(model)) as GameObject;
 		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.mainTexture = standardTexture;
 		Transform obj = unitModel.transform.GetChild(0); 
@@ -39,54 +43,117 @@ public class Units : MonoBehaviour {
 		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
-
-		this.moveRange = moveRange;
-		this.attackRange = attackRange;
 	}
 
-	public void attack(Tile tile){
-		
+	public static void engageAttacks(List<Units> Units){
+		List<Units> attackList = new List<Units>();
+
+		foreach (Units unit in Units) {
+			if (unit != null){
+				if(unit.attackTarget != null){
+					attackList.Add(unit);
+				}
+			}
+		}
+
+		foreach (Units unit in attackList) {
+			unit.attack(unit, unit.attackTarget);
+		}
+
+		foreach (GameObject line in lines) {
+			Destroy(line);
+		}
+		lines.Clear ();
 	}
 
-	public void targetLine(Tile currentTile, Tile targetTile){
+	public void attack(Units attacker, Units target){
+		//play attack animation
+		target.hp -= attacker.damage;
+		if (target.hp <= 0) target.die(target);
+	}
+
+	public void die(Units target){
+		//play death animation
+		target.currentTile.tile.name = "tile";
+		Main.bothPlayerUnits.Remove (target);
+		Destroy(target.unitModel);
+		Destroy(target);
+	}
+
+	public void targetLine(Tile currentTile, Tile targetTile, bool atkEachother){
+	
+		Units targetUnit = currentTile.currentUnit.attackTarget;
 
 		float deltaX = currentTile.getXpos()-targetTile.getXpos();
 		float deltaZ = currentTile.getZpos()-targetTile.getZpos();
 
 		float distance = Mathf.Sqrt(Mathf.Pow(deltaX,2) + 
 		                            Mathf.Pow(deltaZ,2));
+		if (targetUnit != null){
+			if (currentTile.currentUnit == targetUnit.attackTarget){
+				atkEachother = false;
+				attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
+				setLineMaterial(atkEachother, currentTile.currentUnit, targetUnit.attackLine);
+			}
+		}
 
-		if (attackLine == null)	attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
+		currentTile.currentUnit.attackTarget = targetTile.currentUnit;
 
-		attackLine.transform.position = new Vector3 (currentTile.getXpos()-deltaX/2,
-		                                                  currentTile.getYpos()+0.1f, 
-														  currentTile.getZpos()-deltaZ/2);
+		if(currentTile.currentUnit.attackTarget == targetTile.currentUnit && 
+		   targetTile.currentUnit.attackTarget == currentTile.currentUnit) atkEachother = true;		
 
-		attackLine.transform.localScale = new Vector3(0.2f,distance,0);
-		attackLine.transform.localRotation = Quaternion.Euler(new Vector3 
+		if (attackLine == null) attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
+
+		if (atkEachother == false) {
+			lines.Add (attackLine);
+			attackLine.transform.position = new Vector3(currentTile.getXpos()-deltaX/2,
+		                                                currentTile.getYpos()+1, 
+														currentTile.getZpos()-deltaZ/2);
+
+			attackLine.transform.localScale = new Vector3(0.2f,distance,0);
+			attackLine.transform.localRotation = Quaternion.Euler(new Vector3 
 		                                    (90, TouchHandler.calculateAngle
 		 									(currentTile.getXpos(), 
 		                                     currentTile.getZpos(), 
 		                                     targetTile.getXpos(), 
 		                                     targetTile.getZpos()) * Mathf.Rad2Deg, 0));
+
+			attackLine.renderer.material.shader = Shader.Find ("Mobile/Vertex Colored");
+		}
+		else {
+			Destroy(attackLine);
+		}
+		setLineMaterial(atkEachother, targetTile.currentUnit, attackLine);
 	}
 
-	public void removeLine(){
-		Destroy(attackLine);
+	private void setLineMaterial(bool atkEachother, Units targetUnit, GameObject lineToChange){
+
+			if (targetUnit.playerIndex == 1){
+				if (atkEachother == true){
+					targetUnit.attackLine.renderer.material.color = new Color(0.800f,0.800f,0.800f,1);
+					Texture collideTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
+					targetUnit.attackLine.renderer.material.mainTexture = collideTexture;
+				} else lineToChange.renderer.material.color = new Color (255 / 255, 123 / 255, 123 / 255);
+
+			} else{
+				if (atkEachother == true){
+					targetUnit.attackLine.renderer.material.color = new Color(0.800f,0.800f,0.800f,1);
+					Texture collideTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
+					targetUnit.attackLine.renderer.material.mainTexture = collideTexture;
+					targetUnit.attackLine.renderer.material.SetTextureScale("_MainTex", new Vector2(-1,-1));
+				}
+				else lineToChange.renderer.material.color = new Color (81 / 255, 71 / 255, 255 / 255);
+			}
 	}
 
 	public void faceTarget(Units unit, Tile targetTile){
 		Vector3 unitPos = unit.unitModel.transform.position;
 		unit.unitModel.transform.localRotation = Quaternion.Euler(new Vector3 
 			 									(0, TouchHandler.calculateAngle(
-												 unit.unitModel.transform.position.x, 
-											   	 unit.unitModel.transform.position.z, 
+												 unitPos.x, 
+											   	 unitPos.z, 
 		                                         targetTile.getXpos(), 
 		                                         targetTile.getZpos()) * Mathf.Rad2Deg, 0));
-	}
-
-	public void faceTarget(Units unit, Units targetUnit){
-		faceTarget(unit, targetUnit.currentTile);
 	}
 
 	public void setRange(bool removeRange, bool moveOrAttack){
@@ -118,7 +185,7 @@ public class Units : MonoBehaviour {
 							if (TouchHandler.unitSelection){
 								unitRange[x,z].setTexture(Tile.tileTextureD);
 							} if (TouchHandler.unitAttacking && unitRange[x,z].currentUnit.playerIndex != playerIndex){
-								unitRange[x,z].setTexture(Tile.tileTextureB);
+								unitRange[x,z].setTexture(Tile.tileTextureE);
 							}
 						}
 					}

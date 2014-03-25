@@ -10,6 +10,9 @@ public class Phases : MonoBehaviour {
 		TouchHandler.unitSelection = false;
 		TouchHandler.unitMovement = false;
 		TouchHandler.unitAttacking = false;
+		TouchHandler.switchPlayer = false;
+		TouchHandler.resetSelection = true;
+
 		switch(currentPhase){
 			case 1: 			
 				TouchHandler.unitSelection = true;
@@ -20,27 +23,12 @@ public class Phases : MonoBehaviour {
 				TouchHandler.unitAttacking = true;
 				break;
 			case 3:
+				TouchHandler.switchPlayer = true;
+				TouchHandler.unitSelection = true;
+				TouchHandler.unitAttacking = true;
 				break;
 		}
-	}
 
-	/*public static Mousepicking mousePicking;
-	
-	public Phases(Camera camera, Player currentPlayer, InputManager inputManager, AssetManager assetManager, Node rootNode, Grid grid){
-		mousePicking = new Mousepicking(camera, currentPlayer, inputManager, assetManager, rootNode, grid);
-		mousePicking.initialize();
+		if (TouchHandler.switchPlayer == true) TouchHandler.switchPlayers ();
 	}
-	
-	public void selectPhase(String currentPhase){
-		if (currentPhase == "movePhase"){
-			mousePicking.unitSelection = true;
-			mousePicking.unitMovement = true;
-		}
-		else if (currentPhase == "attackPhase"){
-			
-		}
-		else if (currentPhase == "defensePhase"){
-			
-		}
-	}*/
 }

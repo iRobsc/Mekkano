@@ -9,7 +9,11 @@ public class Tile : MonoBehaviour{
 	public Units currentUnit = null;
 	public Texture texture;
 	private Texture currentTexture;
-	public static string tileTextureA = "Mekkano Assets/Textures/tileA", tileTextureB = "Mekkano Assets/Textures/tileB", tileTextureC = "Mekkano Assets/Textures/tileC",tileTextureD = "Mekkano Assets/Textures/tileD";
+	public static string tileTextureA = "Mekkano Assets/Textures/tileA", 
+						 tileTextureB = "Mekkano Assets/Textures/tileB", 
+						 tileTextureC = "Mekkano Assets/Textures/tileC",
+						 tileTextureD = "Mekkano Assets/Textures/tileD",
+						 tileTextureE = "Mekkano Assets/Textures/tileE";
 	private Material spriteMaterial;
 	public GameObject tile;
 
@@ -52,6 +56,7 @@ public class Tile : MonoBehaviour{
 		tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
 		setTexture (tileTextureA);
 		tile.renderer.material.shader = Shader.Find ("Unlit/Transparent");
+		tile.layer = LayerMask.NameToLayer ("Tiles");
 		tile.name = "tile";
 
 		tile.transform.localScale = new Vector3 (width, length, 1);

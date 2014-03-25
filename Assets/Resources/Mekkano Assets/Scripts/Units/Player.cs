@@ -1,13 +1,16 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
+using System.Linq;
 
 public class Player : MonoBehaviour {
 
 	public int unitsAmount = 10, lines, lineStart;
 	public Units[,] units;
 	public static int playerIndex;
+	private int gridXlength = Main.gridXlength, gridZlength = Main.gridZlength;
 
-	public void createUnits(int gridXlength, int gridZlength, Grid grid, float gridHeight, bool side){
+	public void createUnits(Grid grid, float gridHeight, bool side){
 		
 		if (side){
 			lines = 0;  // the variable lines is added to check if it's player 1 or player 2 position, if it's player 2 it starts on the other edge of the grid
