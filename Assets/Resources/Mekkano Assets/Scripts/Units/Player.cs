@@ -10,6 +10,9 @@ public class Player : MonoBehaviour {
 	public static int playerIndex;
 	private int gridXlength = Main.gridXlength, gridZlength = Main.gridZlength;
 
+	public bool damageBuff = false;
+	public bool movementBuff = false;
+
 	public void createUnits(Grid grid, float gridHeight, bool side){
 		
 		if (side){
@@ -30,21 +33,8 @@ public class Player : MonoBehaviour {
 			= gameObject.AddComponent<TestUnit>();
 			
 			units[i-currentColumn*gridZlength,currentColumn].create   // placing the units on different locations depending on if it's player 1 or 2
-				(grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),
-				             i-currentColumn*gridZlength), side);
-
-			units[i-currentColumn*gridZlength,currentColumn].playerIndex = (side?1:2);
-			
-			grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),    // adding the current unit to the tile so we can handle the tile as the unit later
-			             i-currentColumn*gridZlength).currentUnit = 
-				units[i-currentColumn*gridZlength,currentColumn];
-
-			grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1),    // changing the name so we can handle the unit tiles differently when clicked
-			             i-currentColumn*gridZlength).tile.name = "unitTile";
-			
-			units[i-currentColumn*gridZlength,(currentColumn*1)].currentTile = 
-				grid.getGrid((currentColumn*direction)+lineStart+(side?0:-1), // adding the current tile to the unit
-				             i-currentColumn*gridZlength);
+				(grid.getTile((currentColumn*direction)+lineStart+(side?0:-1),
+				              i-currentColumn*gridZlength), side);
 			
 			if (side == false){
 				lines = lineStart - currentColumn*2; // decreasing the lines depending on what column the unit is on (*2 because of currentColumn adds +1 column each "i" 1-2=-1 insead of 1-1=0 to make it decrease in columns each time it has looped each column)

@@ -4,45 +4,75 @@ using System.Collections.Generic;
 
 public class Units : MonoBehaviour {
 
+	protected int tileRange, movementPoints;
+	protected float scale, x, z;
+
 	public bool selected;
 	public Tile currentTile, targetTile;
 	public double angle;
 	public static float speed = 10; // closer to 0 equals faster (10 is a good speed)
-	protected int tileRange, movementPoints;
-	protected float scale, x, z;
 	private float gridHeight;
 	private Texture unitStandardTexture, unitSelectedTexture;
 	private Grid grid;
-	private Texture standardTexture;
-	private Tile[,] unitRange;
+	private Texture standardTexture, attackTexture;
 	private Vector3 rotation;
+
 	public GameObject attackLine;
 	public static List<GameObject> lines = new List<GameObject> ();
+	public Tile[,] rangeTiles;
 
 	public GameObject unitModel;
 	public int playerIndex;
 	public Units attackTarget;
 
+	public int damage, buffDamage;
+
 	// variables from the subclass
 	protected Vector3 scaling;
 	protected string model, texture;
-	public int moveRange, attackRange, damage, hp;
+	public bool moveable, aura;
+	public int moveRange, attackRange, range, baseDamage, hp;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
+	public virtual void create(Tile tile) {/* polymorphic method*/}
 
-	protected void createUnit(Tile tile, bool side){
+	void Start(){
 		grid = Main.grid;
 		gridHeight = grid.height;
-		standardTexture = (Texture2D)Resources.Load (texture);
-		unitModel = Instantiate(Resources.Load(model)) as GameObject;
-		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.mainTexture = standardTexture;
-		Transform obj = unitModel.transform.GetChild(0); 
-		obj.gameObject.AddComponent<MeshCollider> ();
-		unitModel.transform.GetChild(0).name = "unit";
+	}
 
+	protected void createUnit(Tile tile, bool side){
+		createModel(tile);
 		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
+		playerIndex = (side?1:2);
+		calculateDamage();
+	}
+
+	protected void createObject(Tile tile){
+		createModel(tile);
+		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
+		unitModel.transform.localScale = scaling;
+	}
+
+	private void createModel(Tile tile){
+		standardTexture = (Texture2D)Resources.Load(texture);
+		unitModel = Instantiate(Resources.Load(model)) as GameObject;
+		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.mainTexture = standardTexture;
+		
+		Transform obj = unitModel.transform.GetChild(0); 
+		obj.gameObject.AddComponent<MeshCollider> ();
+		unitModel.transform.GetChild(0).name = "object";
+
+		currentTile = tile;
+		currentTile.currentUnit = this;
+
+		tile.tile.name = "collisionTile";
+	}
+
+	public void calculateDamage(){
+		damage = baseDamage + buffDamage;
 	}
 
 	public static void engageAttacks(List<Units> Units){
@@ -70,12 +100,13 @@ public class Units : MonoBehaviour {
 		//play attack animation
 		target.hp -= attacker.damage;
 		if (target.hp <= 0) target.die(target);
+		attacker.attackTarget = null;
 	}
 
 	public void die(Units target){
 		//play death animation
 		target.currentTile.tile.name = "tile";
-		Main.bothPlayerUnits.Remove (target);
+		Main.allUnits.Remove (target);
 		Destroy(target.unitModel);
 		Destroy(target);
 	}
@@ -130,19 +161,25 @@ public class Units : MonoBehaviour {
 
 			if (targetUnit.playerIndex == 1){
 				if (atkEachother == true){
-					targetUnit.attackLine.renderer.material.color = new Color(0.800f,0.800f,0.800f,1);
-					Texture collideTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
-					targetUnit.attackLine.renderer.material.mainTexture = collideTexture;
-				} else lineToChange.renderer.material.color = new Color (255 / 255, 123 / 255, 123 / 255);
+					targetUnit.attackLine.renderer.material.color = new Color(0.8f,0.8f,0.8f,1);
+					attackTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
+					targetUnit.attackLine.renderer.material.mainTexture = attackTexture;
+				} else {
+					attackTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/p1Attack");
+					lineToChange.renderer.material.mainTexture = attackTexture;
+				}
 
 			} else{
 				if (atkEachother == true){
-					targetUnit.attackLine.renderer.material.color = new Color(0.800f,0.800f,0.800f,1);
-					Texture collideTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
-					targetUnit.attackLine.renderer.material.mainTexture = collideTexture;
+					targetUnit.attackLine.renderer.material.color = new Color(0.8f,0.8f,0.8f,1);
+					attackTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/attackCollide");
+					targetUnit.attackLine.renderer.material.mainTexture = attackTexture;
 					targetUnit.attackLine.renderer.material.SetTextureScale("_MainTex", new Vector2(-1,-1));
 				}
-				else lineToChange.renderer.material.color = new Color (81 / 255, 71 / 255, 255 / 255);
+				else {
+					attackTexture = (Texture2D)Resources.Load("Mekkano Assets/Textures/p2Attack");
+					lineToChange.renderer.material.mainTexture = attackTexture;
+				}
 			}
 	}
 
@@ -156,58 +193,8 @@ public class Units : MonoBehaviour {
 		                                         targetTile.getZpos()) * Mathf.Rad2Deg, 0));
 	}
 
-	public void setRange(bool removeRange, bool moveOrAttack){
-		int range;
-		if (moveOrAttack == true) range = moveRange;
-		else range = attackRange;
-		if (removeRange == true){
-			int xyLength = range+(range+1);
-			unitRange = new Tile[xyLength, xyLength];
-			for(int x = 0; x < xyLength; x++){
-				for(int y = 0; y < xyLength; y++){
-					if(tileInRange((0-range)+x, (0-range)+y, range)){
-						if ((currentTile.xCoord-range)+x >= 0 && 
-						    (currentTile.xCoord-range)+x < Main.gridXlength &&
-						    (currentTile.zCoord-range)+y >= 0 &&
-						    (currentTile.zCoord-range)+y < Main.gridZlength){
-							unitRange[x,y] = grid.getGrid(((currentTile.xCoord-range)+x),((currentTile.zCoord-range)+y));
-						}
-					}
-				}
-			}
-
-			for(int x = 0; x < xyLength; x++){
-				for (int z = 0; z < xyLength; z++){
-					if (unitRange[x,z] != null){
-						if (unitRange[x,z].currentUnit == null){
-							unitRange[x,z].setTexture(Tile.tileTextureC);
-						} else {
-							if (TouchHandler.unitSelection){
-								unitRange[x,z].setTexture(Tile.tileTextureD);
-							} if (TouchHandler.unitAttacking && unitRange[x,z].currentUnit.playerIndex != playerIndex){
-								unitRange[x,z].setTexture(Tile.tileTextureE);
-							}
-						}
-					}
-				}
-			}
-		} else if (removeRange == false){
-				unitRange = grid.getGrid();
-				for(int x = 0; x < grid.getGridWidth(); x++){
-					for (int z = 0; z < grid.getGridLength(); z++)
-						unitRange[x,z].setTexture(Tile.tileTextureA);
-					}
-			}
-	}
-
-	private bool tileInRange(int x, int y, int range){
-		if (range == 1) return true;
-		else if (range < 4) return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
-		else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
-	}
-
 	public bool inRange(Tile tile){
-		foreach (Tile currentTile in unitRange) {
+		foreach (Tile currentTile in rangeTiles) {
 			if (currentTile == tile) return true;
 		}
 		return false;
@@ -231,10 +218,6 @@ public class Units : MonoBehaviour {
 	
 	public float getZ(){
 		return z;
-	}
-	
-	public float getDamage(){
-		return damage;
 	}
 	
 	public void setStandardTexture(){

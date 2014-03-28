@@ -13,7 +13,8 @@ public class Tile : MonoBehaviour{
 						 tileTextureB = "Mekkano Assets/Textures/tileB", 
 						 tileTextureC = "Mekkano Assets/Textures/tileC",
 						 tileTextureD = "Mekkano Assets/Textures/tileD",
-						 tileTextureE = "Mekkano Assets/Textures/tileE";
+						 tileTextureE = "Mekkano Assets/Textures/tileE",
+						 tileTextureF = "Mekkano Assets/Textures/tileF";
 	private Material spriteMaterial;
 	public GameObject tile;
 

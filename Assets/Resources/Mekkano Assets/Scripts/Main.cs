@@ -10,7 +10,8 @@ public class Main : MonoBehaviour {
 	public static Player player1, player2;
 	public static Grid grid;
 	public static Player currentPlayer;
-	public static List<Units> bothPlayerUnits;
+	public static List<Units> allUnits;
+	public static List<ControlPoint> controlPoints;
 
 	void Start () {
 		grid = gameObject.AddComponent<Grid>();
@@ -22,10 +23,15 @@ public class Main : MonoBehaviour {
 		player2 = gameObject.AddComponent<Player> ();
 		player2.createUnits (grid, gridHeight, false);
 
-		bothPlayerUnits = new List<Units> ();
-		bothPlayerUnits.AddRange (player1.units.Cast<Units>().ToList());
-		bothPlayerUnits.AddRange (player2.units.Cast<Units>().ToList());
-
+		controlPoints = new List<ControlPoint>();
+		controlPoints.Add(gameObject.AddComponent<ControlPoint>());
+		controlPoints[0].create(grid.getTile(5,5));
+		
+		allUnits = new List<Units> ();
+		allUnits.AddRange(player1.units.Cast<Units>().ToList());
+		allUnits.AddRange(player2.units.Cast<Units>().ToList());
+		allUnits.AddRange(controlPoints.Cast<Units>().ToList());
+	
 		currentPlayer = player1;
 		Player.playerIndex = 1;
 		Phases.selectPhase(1);
@@ -41,7 +47,7 @@ public class Main : MonoBehaviour {
 				TouchHandler.resetSelection = true;
 			} else {
 				Phases.selectPhase(1);
-				Units.engageAttacks(bothPlayerUnits);
+				Units.engageAttacks(allUnits);
 			}
 		}
 	}

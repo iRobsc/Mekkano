@@ -8,12 +8,14 @@ public class TestUnit : Units {
 		model    = "Mekkano Assets/Models/RangedUnit";
 		texture  = "Mekkano Assets/Textures/tileA";
 		hp = 2;
-		damage = 2;
-		moveRange = 15;
-		attackRange = 15;
+		baseDamage = 2;
+		moveRange = 4;
+		attackRange = 1;
+		moveable = true;
+		aura = false;
 	}
 
 	public override void create(Tile tile, bool side) {
-		createUnit (tile, side);
+		createUnit(tile, side);
 	}
 }

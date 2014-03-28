@@ -8,6 +8,7 @@ public class Grid : MonoBehaviour {
 	public float height;
 
 	public void createGrid(float xPos, float zPos, int width, int length, float gridHeight){
+
 		grid = new Tile[width,length];
 		w = width;
 		l = length;
@@ -21,8 +22,70 @@ public class Grid : MonoBehaviour {
 			}
 		}
 	}
+
+	private bool tileInRange(int x, int y, int range){
+
+		if (range == 1) return true;
+		else if (range < 4) return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
+		else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
+	}
+
+	public void setRange(Tile centerPoint, int range, bool attacking){
+
+		int xyLength = range+(range+1);
+		Tile[,] rangeTiles = new Tile[xyLength, xyLength];
+		centerPoint.currentUnit.rangeTiles = rangeTiles;
+		
+		for(int x = 0; x < xyLength; x++){
+			for(int y = 0; y < xyLength; y++){
+				if(tileInRange((0-range)+x, (0-range)+y, range)){
+					if((centerPoint.xCoord-range)+x >= 0 && 
+					   (centerPoint.xCoord-range)+x < Main.gridXlength &&
+					   (centerPoint.zCoord-range)+y >= 0 &&
+					   (centerPoint.zCoord-range)+y < Main.gridZlength){
+						rangeTiles[x,y] = grid[centerPoint.xCoord-range+x, centerPoint.zCoord-range+y];
+					}
+				}
+			}
+		}
+		showRange(rangeTiles, attacking, centerPoint.currentUnit);
+	}
 	
-	public Tile getGrid(int x, int z){
+	public void showRange(Tile[,] rangeTiles, bool attacking, Units selectedUnit){
+
+		int center = (int)Mathf.Ceil(rangeTiles.GetLength(0)/2);
+		Tile centerPoint = rangeTiles[center, center];
+
+		for(int x = 0; x < rangeTiles.GetLength(0); x++){
+			for (int z = 0; z < rangeTiles.GetLength(0); z++){
+				if (rangeTiles[x,z] != null){
+					if (rangeTiles[x,z].tile.name == "tile"){
+						rangeTiles[x,z].setTexture(Tile.tileTextureC); // open tile texture
+					} else {
+						rangeTiles[x,z].setTexture(Tile.tileTextureD); // closed tile texture
+
+						if (TouchHandler.unitAttacking && rangeTiles[x,z].currentUnit != null 
+						    && selectedUnit.playerIndex != 0){
+						    if (rangeTiles[x,z].currentUnit.playerIndex != centerPoint.currentUnit.playerIndex &&
+							    rangeTiles[x,z].currentUnit.playerIndex != 0){
+								rangeTiles[x,z].setTexture(Tile.tileTextureE);
+							}
+						} else if (selectedUnit.aura == true){
+							rangeTiles[x,z].setTexture(Tile.tileTextureF);
+						}
+					}
+				}
+			}
+		} 
+	}
+
+	public void hideRange(Tile[,] rangeTiles){
+		foreach(Tile tile in rangeTiles){
+			if(tile != null) tile.setTexture(Tile.tileTextureA);
+		}
+	}
+	
+	public Tile getTile(int x, int z){
 		return grid[x,z];
 	}
 	
