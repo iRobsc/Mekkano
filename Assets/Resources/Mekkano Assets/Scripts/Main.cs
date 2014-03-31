@@ -6,7 +6,7 @@ using System.Linq;
 public class Main : MonoBehaviour {
 
 	public static int gridXlength = 15, gridZlength = 10, xPos = 0, zPos = 0;
-	private static float gridHeight = 0.1f;
+	public static float gridHeight = 0.1f;
 	public static Player player1, player2;
 	public static Grid grid;
 	public static Player currentPlayer;
@@ -25,7 +25,11 @@ public class Main : MonoBehaviour {
 
 		controlPoints = new List<ControlPoint>();
 		controlPoints.Add(gameObject.AddComponent<ControlPoint>());
+		controlPoints.Add(gameObject.AddComponent<ControlPoint>());
 		controlPoints[0].create(grid.getTile(5,5));
+		controlPoints[0].buffType = 0;
+		controlPoints[1].create(grid.getTile(7,7));
+		controlPoints[1].buffType = 1;
 		
 		allUnits = new List<Units> ();
 		allUnits.AddRange(player1.units.Cast<Units>().ToList());

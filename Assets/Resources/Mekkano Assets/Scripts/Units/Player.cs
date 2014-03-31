@@ -10,6 +10,7 @@ public class Player : MonoBehaviour {
 	public static int playerIndex;
 	private int gridXlength = Main.gridXlength, gridZlength = Main.gridZlength;
 
+	public bool[] hasBuff = new bool[2]; //index: 0 = controlPointDmg, 1 = controlPointMove
 	public bool damageBuff = false;
 	public bool movementBuff = false;
 
@@ -35,7 +36,9 @@ public class Player : MonoBehaviour {
 			units[i-currentColumn*gridZlength,currentColumn].create   // placing the units on different locations depending on if it's player 1 or 2
 				(grid.getTile((currentColumn*direction)+lineStart+(side?0:-1),
 				              i-currentColumn*gridZlength), side);
-			
+
+			units[i-currentColumn*gridZlength,currentColumn].owner = this;
+
 			if (side == false){
 				lines = lineStart - currentColumn*2; // decreasing the lines depending on what column the unit is on (*2 because of currentColumn adds +1 column each "i" 1-2=-1 insead of 1-1=0 to make it decrease in columns each time it has looped each column)
 			}

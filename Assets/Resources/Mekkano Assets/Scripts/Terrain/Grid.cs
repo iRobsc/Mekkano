@@ -4,11 +4,11 @@ using System.Collections;
 public class Grid : MonoBehaviour {
 
 	private Tile[,] grid;
+	private Tile[,] rangeTiles;
 	private int w, l;
-	public float height;
+	private float height;
 
 	public void createGrid(float xPos, float zPos, int width, int length, float gridHeight){
-
 		grid = new Tile[width,length];
 		w = width;
 		l = length;
@@ -24,17 +24,25 @@ public class Grid : MonoBehaviour {
 	}
 
 	private bool tileInRange(int x, int y, int range){
-
 		if (range == 1) return true;
 		else if (range < 4) return (Mathf.Abs(x) + Mathf.Abs(y) <= range);
 		else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
 	}
 
-	public void setRange(Tile centerPoint, int range, bool attacking){
-
+	public void setRange(Tile centerPoint, int range, bool buffTiles){
 		int xyLength = range+(range+1);
-		Tile[,] rangeTiles = new Tile[xyLength, xyLength];
-		centerPoint.currentUnit.rangeTiles = rangeTiles;
+		
+		rangeTiles = new Tile[xyLength, xyLength];
+
+		if(buffTiles == true) {
+			if (centerPoint.currentUnit.buffTiles != null){
+				foreach(Tile tile in centerPoint.currentUnit.buffTiles){
+					tile.buffSources.Remove(centerPoint.currentUnit);
+				}
+			}
+			centerPoint.currentUnit.buffTiles = rangeTiles;
+		}
+		else centerPoint.currentUnit.rangeTiles = rangeTiles;
 		
 		for(int x = 0; x < xyLength; x++){
 			for(int y = 0; y < xyLength; y++){
@@ -44,14 +52,18 @@ public class Grid : MonoBehaviour {
 					   (centerPoint.zCoord-range)+y >= 0 &&
 					   (centerPoint.zCoord-range)+y < Main.gridZlength){
 						rangeTiles[x,y] = grid[centerPoint.xCoord-range+x, centerPoint.zCoord-range+y];
+						if (buffTiles == true) {
+							rangeTiles[x,y].buffSources.Add(centerPoint.currentUnit);
+						}
 					}
 				}
 			}
 		}
-		showRange(rangeTiles, attacking, centerPoint.currentUnit);
 	}
 	
-	public void showRange(Tile[,] rangeTiles, bool attacking, Units selectedUnit){
+	public void showRange(Units selectedUnit){
+		Tile[,] rangeTiles = (selectedUnit.rangeTiles != null? 
+		                      selectedUnit.rangeTiles : selectedUnit.buffTiles);
 
 		int center = (int)Mathf.Ceil(rangeTiles.GetLength(0)/2);
 		Tile centerPoint = rangeTiles[center, center];
@@ -59,18 +71,17 @@ public class Grid : MonoBehaviour {
 		for(int x = 0; x < rangeTiles.GetLength(0); x++){
 			for (int z = 0; z < rangeTiles.GetLength(0); z++){
 				if (rangeTiles[x,z] != null){
-					if (rangeTiles[x,z].tile.name == "tile"){
+					if (rangeTiles[x,z].tileMesh.name == "tile"){
 						rangeTiles[x,z].setTexture(Tile.tileTextureC); // open tile texture
 					} else {
 						rangeTiles[x,z].setTexture(Tile.tileTextureD); // closed tile texture
-
 						if (TouchHandler.unitAttacking && rangeTiles[x,z].currentUnit != null 
 						    && selectedUnit.playerIndex != 0){
 						    if (rangeTiles[x,z].currentUnit.playerIndex != centerPoint.currentUnit.playerIndex &&
 							    rangeTiles[x,z].currentUnit.playerIndex != 0){
 								rangeTiles[x,z].setTexture(Tile.tileTextureE);
 							}
-						} else if (selectedUnit.aura == true){
+						} else if(selectedUnit.aura == true){
 							rangeTiles[x,z].setTexture(Tile.tileTextureF);
 						}
 					}
@@ -84,6 +95,18 @@ public class Grid : MonoBehaviour {
 			if(tile != null) tile.setTexture(Tile.tileTextureA);
 		}
 	}
+
+	/*public void checkAura(Tile[,] rangeTiles, bool conquest, Units auraSource){
+		int player1Counter = 0, player2Counter = 0;
+		foreach(Tile auraTile in rangeTiles) {
+			if(auraTile.currentUnit != null) {
+				if(conquest) {
+					if (auraTile.currentUnit.playerIndex == 1) player1Counter += 1; 
+					else if (auraTile.currentUnit.playerIndex == 2) player2Counter += 1;
+				} else auraSource.giveBuff();
+			}
+		}
+	}*/
 	
 	public Tile getTile(int x, int z){
 		return grid[x,z];

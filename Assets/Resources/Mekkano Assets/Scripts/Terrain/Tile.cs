@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Tile : MonoBehaviour{
 	
 	private float x, z;
+	public List<Units> buffSources = new List<Units>();
 	public int xCoord, zCoord;
 	public static float width = 2.5f, length = 2.5f;
 	public Units currentUnit = null;
@@ -16,7 +18,7 @@ public class Tile : MonoBehaviour{
 						 tileTextureE = "Mekkano Assets/Textures/tileE",
 						 tileTextureF = "Mekkano Assets/Textures/tileF";
 	private Material spriteMaterial;
-	public GameObject tile;
+	public GameObject tileMesh;
 
 	public float getXindex(){
 		return x;
@@ -41,28 +43,28 @@ public class Tile : MonoBehaviour{
 	}
 
 	public float getXpos(){
-		return tile.transform.localPosition.x;
+		return tileMesh.transform.localPosition.x;
 	}
 
 	public float getYpos(){
-		return tile.transform.localPosition.y;
+		return tileMesh.transform.localPosition.y;
 	}
 
 	public float getZpos(){
-		return tile.transform.localPosition.z;
+		return tileMesh.transform.localPosition.z;
 	}
 	
 	public void createTile(float x, float y, float z){
 
-		tile = GameObject.CreatePrimitive (PrimitiveType.Quad);
+		tileMesh = GameObject.CreatePrimitive (PrimitiveType.Quad);
 		setTexture (tileTextureA);
-		tile.renderer.material.shader = Shader.Find ("Unlit/Transparent");
-		tile.layer = LayerMask.NameToLayer ("Tiles");
-		tile.name = "tile";
+		tileMesh.renderer.material.shader = Shader.Find("Unlit/Transparent");
+		tileMesh.layer = LayerMask.NameToLayer("Tiles");
+		tileMesh.name = "tile";
 
-		tile.transform.localScale = new Vector3 (width, length, 1);
-		tile.transform.localPosition = new Vector3 (x, y, z);
-		tile.transform.Rotate (new Vector3 (90,0,0));
+		tileMesh.transform.localScale = new Vector3 (width, length, 1);
+		tileMesh.transform.localPosition = new Vector3 (x, y, z);
+		tileMesh.transform.Rotate (new Vector3 (90,0,0));
 
 		this.x = x;
 		this.z = z;
@@ -70,7 +72,7 @@ public class Tile : MonoBehaviour{
 
 	public void setTexture(string texturePath){
 		texture = (Texture2D)Resources.Load(texturePath);
-		tile.renderer.material.mainTexture = texture;
+		tileMesh.renderer.material.mainTexture = texture;
 	}
 
 }

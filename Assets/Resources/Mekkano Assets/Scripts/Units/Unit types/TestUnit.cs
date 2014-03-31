@@ -7,7 +7,7 @@ public class TestUnit : Units {
 		scaling = new Vector3 ((float)0.2, (float)0.2, (float)0.2);
 		model    = "Mekkano Assets/Models/RangedUnit";
 		texture  = "Mekkano Assets/Textures/tileA";
-		hp = 2;
+		hp = 3;
 		baseDamage = 2;
 		moveRange = 4;
 		attackRange = 1;

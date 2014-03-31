@@ -13,32 +13,35 @@ public class Units : MonoBehaviour {
 	public static float speed = 10; // closer to 0 equals faster (10 is a good speed)
 	private float gridHeight;
 	private Texture unitStandardTexture, unitSelectedTexture;
-	private Grid grid;
+	private Grid grid = Main.grid;
 	private Texture standardTexture, attackTexture;
 	private Vector3 rotation;
 
 	public GameObject attackLine;
 	public static List<GameObject> lines = new List<GameObject> ();
-	public Tile[,] rangeTiles;
+	public Tile[,] rangeTiles, buffTiles;
 
 	public GameObject unitModel;
 	public int playerIndex;
+	public Player owner;
 	public Units attackTarget;
 
-	public int damage, buffDamage;
+	public bool hasBuff;
+	public int damage, damageBuff, movementBuff, buffType;
 
 	// variables from the subclass
 	protected Vector3 scaling;
 	protected string model, texture;
 	public bool moveable, aura;
-	public int moveRange, attackRange, range, baseDamage, hp;
+	public int moveRange, movementRange, attackRange, buffRange, baseDamage, hp;
+	public int[] buffConquest;
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	public virtual void create(Tile tile) {/* polymorphic method*/}
+	public virtual void buff(Player buffingPlayer, int buffType, bool remove) {/* polymorphic method*/}
 
 	void Start(){
-		grid = Main.grid;
-		gridHeight = grid.height;
+		gridHeight = Main.gridHeight;
 	}
 
 	protected void createUnit(Tile tile, bool side){
@@ -48,12 +51,14 @@ public class Units : MonoBehaviour {
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
 		playerIndex = (side?1:2);
 		calculateDamage();
+		calculateMovement();
 	}
 
 	protected void createObject(Tile tile){
 		createModel(tile);
 		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
+		grid.setRange(tile, buffRange, true);
 	}
 
 	private void createModel(Tile tile){
@@ -68,11 +73,15 @@ public class Units : MonoBehaviour {
 		currentTile = tile;
 		currentTile.currentUnit = this;
 
-		tile.tile.name = "collisionTile";
+		tile.tileMesh.name = "collisionTile";
 	}
 
 	public void calculateDamage(){
-		damage = baseDamage + buffDamage;
+		damage = baseDamage + damageBuff;
+	}
+
+	public void calculateMovement(){
+		movementRange = moveRange + movementBuff;
 	}
 
 	public static void engageAttacks(List<Units> Units){
@@ -105,14 +114,22 @@ public class Units : MonoBehaviour {
 
 	public void die(Units target){
 		//play death animation
-		target.currentTile.tile.name = "tile";
+		target.currentTile.tileMesh.name = "tile";
 		Main.allUnits.Remove (target);
 		Destroy(target.unitModel);
 		Destroy(target);
 	}
 
-	public void targetLine(Tile currentTile, Tile targetTile, bool atkEachother){
+	public void resetAtkEachother(Units currentUnit, Units targetUnit){
+		if (currentUnit == targetUnit.attackTarget){
+			if(attackLine == null) attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
+			setLineMaterial(false, currentUnit, targetUnit.attackLine);
+			if(targetUnit.attackLine != null) targetUnit.setLineMaterial(false, currentUnit, targetUnit.attackLine);
+		}
+	}
 	
+	public void targetLine(Tile currentTile, Tile targetTile){
+		bool atkEachother = false;
 		Units targetUnit = currentTile.currentUnit.attackTarget;
 
 		float deltaX = currentTile.getXpos()-targetTile.getXpos();
@@ -120,14 +137,8 @@ public class Units : MonoBehaviour {
 
 		float distance = Mathf.Sqrt(Mathf.Pow(deltaX,2) + 
 		                            Mathf.Pow(deltaZ,2));
-		if (targetUnit != null){
-			if (currentTile.currentUnit == targetUnit.attackTarget){
-				atkEachother = false;
-				attackLine = GameObject.CreatePrimitive(PrimitiveType.Quad);
-				setLineMaterial(atkEachother, currentTile.currentUnit, targetUnit.attackLine);
-			}
-		}
 
+		if(targetUnit != null) resetAtkEachother(currentTile.currentUnit, targetUnit);
 		currentTile.currentUnit.attackTarget = targetTile.currentUnit;
 
 		if(currentTile.currentUnit.attackTarget == targetTile.currentUnit && 
