@@ -26,9 +26,9 @@ public class Main : MonoBehaviour {
 		controlPoints = new List<ControlPoint>();
 		controlPoints.Add(gameObject.AddComponent<ControlPoint>());
 		controlPoints.Add(gameObject.AddComponent<ControlPoint>());
-		controlPoints[0].create(grid.getTile(5,5));
+		controlPoints[0].create(grid.getTile(7,7));
 		controlPoints[0].buffType = 0;
-		controlPoints[1].create(grid.getTile(7,7));
+		controlPoints[1].create(grid.getTile(7,2));
 		controlPoints[1].buffType = 1;
 		
 		allUnits = new List<Units> ();
@@ -48,7 +48,6 @@ public class Main : MonoBehaviour {
 		if (GUI.Button(new Rect(10,10,120,40),"Next Phase")){
 			if (Phases.phase < 3){
 				Phases.selectPhase(Phases.phase+1);
-				TouchHandler.resetSelection = true;
 			} else {
 				Phases.selectPhase(1);
 				Units.engageAttacks(allUnits);

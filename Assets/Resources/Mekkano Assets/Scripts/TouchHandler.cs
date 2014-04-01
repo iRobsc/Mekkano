@@ -107,7 +107,12 @@ public class TouchHandler : MonoBehaviour {
 		selectedUnit.setStandardTexture();
 		grid.hideRange(selectedUnit.rangeTiles);
 		targetTile.setTexture(Tile.tileTextureB);
-			
+
+		Main.currentPlayer.movementPoints -= 1;
+		if(Main.currentPlayer.movementPoints == 0){
+			Phases.selectPhase(Phases.phase+1);
+			Main.currentPlayer.movementPoints = Main.currentPlayer.movementPointBase;
+		}
 		selectedUnit = null;
 	}
 
@@ -180,51 +185,8 @@ public class TouchHandler : MonoBehaviour {
 		
 			Physics.IgnoreLayerCollision(0, 0, true);
 
-			if (hit.collider.gameObject.name == "collisionTile" && unitSelection == true){ 
-
-				foreach(Units unit in allUnits){
-					if (unit != null){
-						if(unit.currentTile.tileMesh.transform == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
-							if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
-								resetUnitSelection();
-							} else { // if another unit is clicked, make that one selected and remove selected to the previous one or attack if the unit is on the other team
-								if (unit.playerIndex == Player.playerIndex){
-									setUnitSelection(unit);
-								} else if (unit.playerIndex != Player.playerIndex && unit.playerIndex != 0 && // if the unit is on the other team, then set it to the selected units attackTarget
-								         TouchHandler.unitAttacking == true && selectedUnit != null){
-									if(selectedUnit.inRange(unit.currentTile)){
-										if(selectedUnit.attackTarget == unit) {
-											selectedUnit.attackTarget.resetAtkEachother(selectedUnit,selectedUnit.attackTarget);
-											selectedUnit.attackTarget = null;
-											Destroy(selectedUnit.attackLine);
-										} else {
-											selectedUnit.targetLine(selectedUnit.currentTile, unit.currentTile);
-											selectedUnit.faceTarget(selectedUnit, selectedUnit.attackTarget.currentTile);
-										}
-									}
-								} else if (unit.playerIndex == 0) { // if the object is a neutral object like a control point
-									setUnitSelection(unit);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (hit.collider.gameObject.name == "tile" && unitSelected == true && unitMovement == true){
-				if(selectedUnit.moveable == true){
-					foreach(Tile tile in Main.grid.getGrid()){
-						if (tile != null){
-							if(tile.tileMesh.transform == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
-								if (tile.currentUnit == null && selectedUnit.inRange(tile)){
-									moveToTile(tile,selectedUnit.currentTile);
-									unitSelected = false;
-								}
-							}
-						}
-					}
-				}	
-			}
+			unitSelecting();
+			tileSelecting();
 		}
 
 		if (movingUnits.Count == 0){
@@ -237,4 +199,54 @@ public class TouchHandler : MonoBehaviour {
 			moveUnit();
 		}
 	}
+
+	private void unitSelecting(){
+		if (hit.collider.gameObject.name == "collisionTile" && unitSelection == true){ 
+			foreach(Units unit in allUnits){
+				if (unit != null){
+					if(unit.currentTile.tileMesh.transform == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
+						if (selectedUnit == unit){ // Resetting selected unit to null if the same unit is clicked twice
+							resetUnitSelection();
+						} else { // if another unit is clicked, make that one selected and remove selected to the previous one or attack if the unit is on the other team
+							if (unit.playerIndex == Player.playerIndex){
+								setUnitSelection(unit);
+							} else if (unit.playerIndex != Player.playerIndex && unit.playerIndex != 0 && // if the unit is on the other team, then set it to the selected units attackTarget
+							           TouchHandler.unitAttacking == true && selectedUnit != null){
+								if(selectedUnit.inRange(unit.currentTile)){
+									if(selectedUnit.attackTarget == unit) {
+										selectedUnit.attackTarget.resetAtkEachother(selectedUnit,selectedUnit.attackTarget);
+										selectedUnit.attackTarget = null;
+										Destroy(selectedUnit.attackLine);
+									} else {
+										selectedUnit.targetLine(selectedUnit.currentTile, unit.currentTile);
+										selectedUnit.faceTarget(selectedUnit, selectedUnit.attackTarget.currentTile);
+									}
+								}
+							} else if (unit.playerIndex == 0) { // if the object is a neutral object like a control point
+								setUnitSelection(unit);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void tileSelecting(){
+		if (hit.collider.gameObject.name == "tile" && unitSelected == true && unitMovement == true){
+			if(selectedUnit.moveable == true){
+				foreach(Tile tile in Main.grid.getGrid()){
+					if (tile != null){
+						if(tile.tileMesh.transform == hit.collider.transform){ // searching for the selected geometry in the currentUnit's array
+							if (tile.currentUnit == null && selectedUnit.inRange(tile)){
+								moveToTile(tile,selectedUnit.currentTile);
+								unitSelected = false;
+							}
+						}
+					}
+				}
+			}	
+		}
+	}
+
 }

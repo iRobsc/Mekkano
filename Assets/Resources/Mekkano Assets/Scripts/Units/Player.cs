@@ -5,17 +5,28 @@ using System.Linq;
 
 public class Player : MonoBehaviour {
 
-	public int unitsAmount = 10, lines, lineStart;
+	public int unitsAmount = 10, lines, lineStart, movementPointBase = 4;
 	public Units[,] units;
 	public static int playerIndex;
+	public int movementPoints;
 	private int gridXlength = Main.gridXlength, gridZlength = Main.gridZlength;
 
 	public bool[] hasBuff = new bool[2]; //index: 0 = controlPointDmg, 1 = controlPointMove
 	public bool damageBuff = false;
 	public bool movementBuff = false;
 
+	void Start(){
+		movementPoints = movementPointBase;
+	}
+
+	private string getUnitFile(){
+		//Resources.Load("Mekkano Assets/Scripts/Units/unitPlacement.txt")
+		string unitPlacement = "boo";
+		return unitPlacement;
+	}
+
 	public void createUnits(Grid grid, float gridHeight, bool side){
-		
+		//Debug.Log(getUnitFile());
 		if (side){
 			lines = 0;  // the variable lines is added to check if it's player 1 or player 2 position, if it's player 2 it starts on the other edge of the grid
 		} else {
