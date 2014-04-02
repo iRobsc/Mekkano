@@ -20,13 +20,12 @@ public class Player : MonoBehaviour {
 	}
 
 	private string getUnitFile(){
-		//Resources.Load("Mekkano Assets/Scripts/Units/unitPlacement.txt")
-		string unitPlacement = "boo";
-		return unitPlacement;
+		TextAsset unitPlacement = Resources.Load("Mekkano Assets/Scripts/Units/unitPlacement") as TextAsset;
+		return unitPlacement.text;
 	}
 
 	public void createUnits(Grid grid, float gridHeight, bool side){
-		//Debug.Log(getUnitFile());
+		Debug.Log(getUnitFile());
 		if (side){
 			lines = 0;  // the variable lines is added to check if it's player 1 or player 2 position, if it's player 2 it starts on the other edge of the grid
 		} else {
