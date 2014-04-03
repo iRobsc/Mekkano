@@ -1,10 +1,14 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
 
 public class Grid : MonoBehaviour {
 
 	private Tile[,] grid;
 	private Tile[,] rangeTiles;
+	private List<Tile> buffTiles = new List<Tile>();
 	private int w, l;
 	private float height;
 
@@ -29,17 +33,33 @@ public class Grid : MonoBehaviour {
 		else return (Mathf.Abs(Mathf.Pow(x,2)) + Mathf.Abs(Mathf.Pow(y,2)) <= Mathf.Pow(range,2));
 	}
 
+	private void checkBuffTiles(Tile tile, bool leavingTile){
+		foreach(Units buffSource in tile.buffSources){
+			if (tile.currentUnit != null){
+				if (tile.currentUnit.hasBuff && leavingTile){
+					buffSource.buff(tile.currentUnit, true);
+				} else if (tile.currentUnit.hasBuff == false && leavingTile == false){
+					buffSource.buff(tile.currentUnit, false);
+				}
+			}
+		}
+	}
+
 	public void setRange(Tile centerPoint, int range, bool buffTiles){
 		int xyLength = range+(range+1);
 		
 		rangeTiles = new Tile[xyLength, xyLength];
 
-		if(buffTiles == true) {
+		if(buffTiles == true){
 			if (centerPoint.currentUnit.buffTiles != null){
 				foreach(Tile tile in centerPoint.currentUnit.buffTiles){
-					tile.buffSources.Remove(centerPoint.currentUnit);
+					if (tile != null) {
+						checkBuffTiles(tile, true);
+						tile.buffSources.Remove(centerPoint.currentUnit);
+					}
 				}
 			}
+			centerPoint.currentUnit.buffTiles = null;
 			centerPoint.currentUnit.buffTiles = rangeTiles;
 		}
 		else centerPoint.currentUnit.rangeTiles = rangeTiles;
@@ -54,6 +74,7 @@ public class Grid : MonoBehaviour {
 						rangeTiles[x,y] = grid[centerPoint.xCoord-range+x, centerPoint.zCoord-range+y];
 						if (buffTiles == true) {
 							rangeTiles[x,y].buffSources.Add(centerPoint.currentUnit);
+							checkBuffTiles(rangeTiles[x,y], false);
 						}
 					}
 				}
@@ -64,6 +85,7 @@ public class Grid : MonoBehaviour {
 	public void showRange(Units selectedUnit){
 		Tile[,] rangeTiles = (selectedUnit.rangeTiles != null? 
 		                      selectedUnit.rangeTiles : selectedUnit.buffTiles);
+		if(selectedUnit.buffTiles != null) buffTiles.AddRange(selectedUnit.buffTiles.Cast<Tile>().ToList());
 
 		int center = (int)Mathf.Ceil(rangeTiles.GetLength(0)/2);
 		Tile centerPoint = rangeTiles[center, center];
@@ -79,15 +101,21 @@ public class Grid : MonoBehaviour {
 						    && selectedUnit.playerIndex != 0){
 						    if (rangeTiles[x,z].currentUnit.playerIndex != centerPoint.currentUnit.playerIndex &&
 							    rangeTiles[x,z].currentUnit.playerIndex != 0){
+
 								rangeTiles[x,z].setTexture(Tile.tileTextureE);
 							}
-						} else if(selectedUnit.aura == true){
+						} if(selectedUnit.aura == true && 
+						         (selectedUnit.playerIndex == rangeTiles[x,z].currentUnit.playerIndex ||
+						     	  selectedUnit.playerIndex == 0) &&
+						          buffTiles.ToList().Contains(rangeTiles[x,z])){
+
 							rangeTiles[x,z].setTexture(Tile.tileTextureF);
 						}
 					}
 				}
 			}
 		} 
+		buffTiles.Clear();
 	}
 
 	public void hideRange(Tile[,] rangeTiles){

@@ -18,12 +18,12 @@ public class CommanderUnit : Units {
 		aura = true;
 	}
 
-	public void buff(Player buffingPlayer, int buffType, bool remove, Units unit){
-		if (unit != null){
-			if(remove) unit.damageBuff -= commanderBuffDmg;
-			else unit.damageBuff += commanderBuffDmg;
-			unit.calculateDamage();
-		}
+	public override void buff(Units unit, bool remove){
+		if (remove && unit.hasBuff) unit.damageBuff -= commanderBuffDmg;
+		else if (unit.hasBuff == false) unit.damageBuff += commanderBuffDmg;
+
+		unit.calculateDamage();
+
 		if (remove) unit.hasBuff = false; 
 		else unit.hasBuff = true;
 	}

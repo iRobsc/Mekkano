@@ -38,14 +38,16 @@ public class Units : MonoBehaviour {
 	
 	public virtual void create(Tile tile, bool side) {/* polymorphic method*/}
 	public virtual void create(Tile tile) {/* polymorphic method*/}
+
 	public virtual void buff(Player buffingPlayer, int buffType, bool remove) {/* polymorphic method*/}
+	public virtual void buff(Units unit, bool remove) {/* polymorphic method*/}
 
 	void Start(){
 		gridHeight = Main.gridHeight;
 	}
 
 	protected void createUnit(Tile tile, bool side){
-		createModel(tile);
+		setupUnit(tile);
 		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
 		unitModel.transform.rotation = Quaternion.AngleAxis (side?+90:-90, Vector3.up);
@@ -55,13 +57,13 @@ public class Units : MonoBehaviour {
 	}
 
 	protected void createObject(Tile tile){
-		createModel(tile);
+		setupUnit(tile);
 		unitModel.transform.position = new Vector3 (tile.getXindex(), gridHeight , tile.getZindex());
 		unitModel.transform.localScale = scaling;
 		grid.setRange(tile, buffRange, true);
 	}
 
-	private void createModel(Tile tile){
+	private void setupUnit(Tile tile){
 		standardTexture = (Texture2D)Resources.Load(texture);
 		unitModel = Instantiate(Resources.Load(model)) as GameObject;
 		unitModel.gameObject.GetComponentInChildren<MeshRenderer> ().material.mainTexture = standardTexture;
@@ -74,6 +76,12 @@ public class Units : MonoBehaviour {
 		currentTile.currentUnit = this;
 
 		tile.tileMesh.name = "collisionTile";
+		
+		if (buffRange > 0) grid.setRange(currentTile, buffRange, true);
+		if (currentTile.buffSources.Count > 0) {
+			foreach(Units buffSource in currentTile.buffSources)
+			buffSource.buff(this, false);
+		}
 	}
 
 	public void calculateDamage(){

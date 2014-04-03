@@ -10,10 +10,10 @@ public class TouchHandler : MonoBehaviour {
 	private bool unitSelected = false;
 	private Quaternion rotation;
 	private bool moveUpdate = false;
-	private Units selectedUnit;
 	private List<Units> movingUnits = new List<Units>(), allUnits;
 	private Grid grid;
 
+	public static Units selectedUnit;
 	public static bool unitSelection = false;
 	public static bool unitMovement = false;
 	public static bool unitAttacking = false;
@@ -50,10 +50,11 @@ public class TouchHandler : MonoBehaviour {
 				if(tileAddition == true) { // add 1 unit to the buff range if it enters it, else remove 1 unit
 					buffSource.buffConquest[selectedUnit.playerIndex - 1] += 1;
 				} else buffSource.buffConquest[selectedUnit.playerIndex - 1] -= 1;
-			} else if(selectedUnit.playerIndex == buffSource.playerIndex && selectedUnit.hasBuff){
+			} else if(selectedUnit.playerIndex == buffSource.playerIndex){
 				if(tileAddition == true){
-					buffSource.buff(selectedUnit.owner, buffSource.buffType, false);
-				} else buffSource.buff(selectedUnit.owner, buffSource.buffType, false);
+					buffSource.buff(selectedUnit, false);
+				} else 
+					buffSource.buff(selectedUnit, true);
 			}
 		}
 	}
@@ -86,12 +87,15 @@ public class TouchHandler : MonoBehaviour {
 		if(selectedUnit.currentTile.buffSources.Count > 0) {
 			buffConquest(selectedUnit.currentTile.buffSources, selectedUnit, false);
 		}
+
 		if(targetTile.buffSources.Count > 0){
 			buffConquest(targetTile.buffSources, selectedUnit, true);
 		}
+
 		if(selectedUnit.currentTile.buffSources != targetTile.buffSources){
 			configureBuffs(selectedUnit.currentTile.buffSources);
 		}
+
 		configureBuffs(targetTile.buffSources);
 
 		selectedUnit.currentTile.currentUnit = null;
@@ -100,7 +104,7 @@ public class TouchHandler : MonoBehaviour {
 		selectedUnit.currentTile = targetTile;
 		selectedUnit.targetTile = targetTile;
 		movingUnits.Add(selectedUnit);
-	
+
 		foreach(Units units in movingUnits){
 			units.faceTarget(units, units.currentTile);
 		}	
@@ -113,6 +117,7 @@ public class TouchHandler : MonoBehaviour {
 			Phases.selectPhase(Phases.phase+1);
 			Main.currentPlayer.movementPoints = Main.currentPlayer.movementPointBase;
 		}
+		setupRange(selectedUnit);
 		selectedUnit = null;
 	}
 
@@ -157,20 +162,25 @@ public class TouchHandler : MonoBehaviour {
 		resetSelection = false;
 	}
 
-	private void setUnitSelection(Units unit){
-		resetUnitSelection();
-		unitSelected = true;
-		selectedUnit = unit;
-		selectedUnit.setSelectedTexture();
-
+	private void setupRange(Units unit){
 		if(unit.buffRange > 0) grid.setRange(selectedUnit.currentTile, selectedUnit.buffRange, true);
-
+		
 		if(unit.moveable == true) {
 			if(unitAttacking == true)
 				grid.setRange(selectedUnit.currentTile, selectedUnit.attackRange, false);
 			else
 				grid.setRange(selectedUnit.currentTile, selectedUnit.movementRange, false);
 		}
+	}
+
+	private void setUnitSelection(Units unit){
+		resetUnitSelection();
+		unitSelected = true;
+		selectedUnit = unit;
+		selectedUnit.setSelectedTexture();
+
+		setupRange(unit);
+
 		grid.showRange(selectedUnit);
 	}
 
@@ -201,7 +211,7 @@ public class TouchHandler : MonoBehaviour {
 	}
 
 	private void unitSelecting(){
-		if (hit.collider.gameObject.name == "collisionTile" && unitSelection == true){ 
+		if (hit.collider.gameObject.name == "collisionTile" && unitSelection == true){
 			foreach(Units unit in allUnits){
 				if (unit != null){
 					if(unit.currentTile.tileMesh.transform == hit.collider.transform && movingUnits.Contains(unit) == false){ // searching for the selected geometry in the currentUnit's array
