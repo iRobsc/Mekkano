@@ -92,8 +92,9 @@ public class Units : MonoBehaviour {
 		movementRange = moveRange + movementBuff;
 	}
 
-	public static void engageAttacks(List<Units> Units){
+	public static void engageAttacks(){
 		List<Units> attackList = new List<Units>();
+		List<Units> Units = Main.allUnits;
 
 		foreach (Units unit in Units) {
 			if (unit != null){

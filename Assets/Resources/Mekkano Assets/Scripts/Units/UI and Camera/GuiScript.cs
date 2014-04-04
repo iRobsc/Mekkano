@@ -69,6 +69,7 @@ public class GuiScript : MonoBehaviour {
 			loadTexture = "Mekkano Assets/Textures/sword_shield";
 			if (GUI.Button (new Rect (0, Screen.height-screenHScale, screenWScale, screenHScale), buttonText)){
 				Phases.selectPhase(Phases.phase-2);
+				Units.engageAttacks();
 			}
 			break;
 		}

@@ -29,6 +29,6 @@ public class Phases : MonoBehaviour {
 				break;
 		}
 
-		if (TouchHandler.switchPlayer == true) TouchHandler.switchPlayers ();
+		if (TouchHandler.switchPlayer == true) TouchHandler.switchPlayers();
 	}
 }
